@@ -17,6 +17,11 @@ test('Windows desktop: local search journey, database startup and Electron isola
     await expect(page).toHaveTitle('Foliuna');
     await expect(page.getByText('LOCAL DEMO', { exact: true })).toBeVisible();
     await expect(page.getByText('Library ready · 0 saved')).toBeVisible();
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setBounds({ width: 900, height: 650 }));
+    expect(await page.evaluate(() => innerWidth)).toBeLessThanOrEqual(1200);
+    await expect(page.getByText('Library ready · 0 saved')).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setBounds({ width: 1440, height: 960 }));
     await page.getByLabel('SEARCH TAGS').fill('forest');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByRole('button', { name: /^View post/ })).toHaveCount(24);

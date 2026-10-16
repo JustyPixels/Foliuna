@@ -820,12 +820,6 @@ dd {
   .source-field {
     width:132px
   }
-  .library-state {
-    display:none
-  }
-  .outline-pill {
-    font-size:6px
-  }
   .detail-grid {
     grid-template-columns:1fr
   }

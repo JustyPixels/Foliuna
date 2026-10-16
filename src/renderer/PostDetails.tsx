@@ -76,7 +76,7 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
             <button role="menuitem" autoFocus onClick={() => onTag(tagMenu, false)}>Add to search bar</button><button role="menuitem" onClick={() => onTag(tagMenu, true)}>Exclude from search</button>
             <button role="menuitem" onClick={() => { onFavorite(tagMenu); closeTagMenu(); }}>{favoriteTags.includes(tagMenu) ? 'Unfavorite tag' : 'Favorite tag'}</button><button role="menuitem" onClick={closeTagMenu}>Close tag options</button></div>}
           <h3>Description</h3><p className="description">{post.description || 'No description provided.'}</p><h3>Sources</h3>{post.sources.length ? <ul className="source-list">{post.sources.map((source, index) => <li key={index}>{source}</li>)}</ul> : <p>No source links provided.</p>}
-          
+
         </div></div>}
     </div>
   </dialog>;

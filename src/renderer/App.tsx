@@ -188,7 +188,7 @@ export function App() {
         <button className="nav-item settings-nav" disabled={maintaining || collectionBusy} onClick={() => setAccountOpen(true)}><span aria-hidden="true">☆</span> Account & favorites</button>
         <button className="nav-item settings-nav" disabled={maintaining || collectionBusy} onClick={() => { setSelected(null); setSettingsOpen(true); }}><span aria-hidden="true">⚙</span> Settings</button>
       </nav>
-      
+
       <div className="sidebar-footer"><span className="status-dot" /> Release candidate <small>v0.5.0-rc.1</small></div>
     </aside>
     <div className="workspace">

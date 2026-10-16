@@ -23,7 +23,7 @@ export function CollectionsPanel({ collections, selectedId, ready, disabled, onS
   function create(event: FormEvent) { event.preventDefault(); void run(() => window.foliuna.collectionCreate({ name }), 'Collection created.', name.trim().normalize('NFC')); }
   const blocked = disabled || busy || !ready;
   return <section className="collections-panel" aria-label="Collections management">
-    
+
     {!ready && <button onClick={onSetup}>Choose archive folder in Settings</button>}
     <form className="collection-create" onSubmit={create}><label htmlFor="new-collection">New collection name</label><input id="new-collection" value={name} maxLength={100} disabled={blocked} onChange={(event) => setName(event.target.value)} placeholder="Landscapes, favorite artists…" /><button className="primary-button" disabled={blocked || !name.trim()}>Create collection</button></form>
     <label htmlFor="selected-collection">Collection</label><select id="selected-collection" value={selectedId ?? ''} disabled={blocked || !collections.length} onChange={(event) => { setMessage(''); onSelect(Number(event.target.value)); }}>

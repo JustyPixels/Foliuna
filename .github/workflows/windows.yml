@@ -2,6 +2,7 @@ name: Windows verification
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
   pull_request:
   workflow_dispatch:
 permissions:
