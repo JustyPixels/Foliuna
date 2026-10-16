@@ -82,7 +82,7 @@ SQLite uses node:sqlite in main to avoid native add-on rebuilding on Windows. Sh
 | tags / post_tags | Latest source snapshot's categorized tags, indexed for gallery lookup |
 | source_snapshots (v2) | Immutable capture IDs, raw source metadata, categorized tags and capture timestamps |
 | download_journal (v2) | Downloading/prepared operations retained until media, DB and sidecar agree |
-| collections / collection_assets | Schema foundation; collection UI is phase 4 |
+| collections / collection_assets | Implemented local memberships; recoverable portable snapshot projection |
 
 An asset with source references cannot be removed through accidental cascading deletion. Repeated captures of the same source/bytes retain older snapshots. If that source's bytes change, SOURCE_CHANGED preserves the earlier archive rather than silently replacing it. A future explicit revision model is needed before replacing archived media.
 
@@ -97,7 +97,7 @@ An asset with source references cannot be removed through accidental cascading d
 
 On recovery, downloading rows discard only their generated incomplete staging files. Prepared rows validate their plan and paths, verify existing/staged media, and rerun finalization idempotently. Capture IDs prevent duplicate snapshots after a crash between SQLite commit and sidecar publication. If a media/sidecar write, permissions check or integrity check fails, the prepared plan and data remain available for retry. Settings can reopen the same folder after the underlying issue is resolved. This handles application interruption and injected I/O failures; it is not a hardware-failure or backup guarantee.
 
-See SIDECAR.md for the shipped portable format and GALLERY.md for restore/query behavior. Offline gallery, validated sidecar import and missing-index reconstruction are implemented; Collections is phase 4.
+See SIDECAR.md for the shipped portable format, GALLERY.md for restore/query behavior, and COLLECTIONS.md for portable local memberships. Gallery, sidecar import, missing-index reconstruction and Collections are implemented.
 
 ## Offline gallery and maintenance
 

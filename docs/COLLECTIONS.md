@@ -1,4 +1,4 @@
-# Collections — Foliuna 0.4.0
+# Collections — Foliuna
 
 Collections organize media already saved in the selected library. One item may belong to several collections; membership follows its SHA-256 identity, so different booru posts with identical bytes share that membership. Adding an item does not copy it or contact a provider.
 

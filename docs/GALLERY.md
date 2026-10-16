@@ -1,4 +1,4 @@
-# Offline gallery — Foliuna 0.4.0
+# Offline gallery — Foliuna
 
 Open **Gallery** after choosing an archive folder in Settings. It searches saved media and captured metadata without an API key or provider connection. **Refresh gallery** picks up newly completed downloads. Grid style, numbered pages/infinite scrolling, detail navigation, tag actions/favorites and the separate/fullscreen viewer are shared with Discover.
 
