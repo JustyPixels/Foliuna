@@ -1,0 +1,35 @@
+import { contextBridge, ipcRenderer } from 'electron';
+import { CHANNELS, type FoliunaApi } from '../shared/contracts';
+
+const api: FoliunaApi = {
+  search: (request) => ipcRenderer.invoke(CHANNELS.search, request),
+  getPost: (request) => ipcRenderer.invoke(CHANNELS.getPost, request),
+  libraryStatus: () => ipcRenderer.invoke(CHANNELS.libraryStatus),
+  openPost: (request) => ipcRenderer.invoke(CHANNELS.openPost, request),
+  getSettings: () => ipcRenderer.invoke(CHANNELS.getSettings),
+  saveCredentials: (input) => ipcRenderer.invoke(CHANNELS.saveCredentials, input),
+  removeCredentials: (provider) => ipcRenderer.invoke(CHANNELS.removeCredentials, provider),
+  saveProvider: (input) => ipcRenderer.invoke(CHANNELS.saveProvider, input),
+  removeProvider: (provider) => ipcRenderer.invoke(CHANNELS.removeProvider, provider),
+  testConnection: (provider) => ipcRenderer.invoke(CHANNELS.testConnection, provider),
+  chooseLibrary: () => ipcRenderer.invoke(CHANNELS.chooseLibrary),
+  downloadPost: (request) => ipcRenderer.invoke(CHANNELS.downloadPost, request),
+  cancelDownload: () => ipcRenderer.invoke(CHANNELS.cancelDownload),
+  getPreferences: () => ipcRenderer.invoke(CHANNELS.getPreferences),
+  savePreferences: (input) => ipcRenderer.invoke(CHANNELS.savePreferences, input),
+  suggestTags: (prefix) => ipcRenderer.invoke(CHANNELS.suggestTags, prefix),
+  getAccount: () => ipcRenderer.invoke(CHANNELS.getAccount),
+  openViewer: (input) => ipcRenderer.invoke(CHANNELS.openViewer, input),
+  gallerySearch: (input) => ipcRenderer.invoke(CHANNELS.gallerySearch, input),
+  galleryPost: (input) => ipcRenderer.invoke(CHANNELS.galleryPost, input),
+  galleryTags: (input) => ipcRenderer.invoke(CHANNELS.galleryTags, input),
+  importSidecars: () => ipcRenderer.invoke(CHANNELS.importSidecars),
+  reconcileLibrary: () => ipcRenderer.invoke(CHANNELS.reconcileLibrary),
+  cacheThumbnail: (input) => ipcRenderer.invoke(CHANNELS.cacheThumbnail, input),
+  collectionList: (input) => ipcRenderer.invoke(CHANNELS.collectionList, input),
+  collectionCreate: (input) => ipcRenderer.invoke(CHANNELS.collectionCreate, input),
+  collectionRename: (input) => ipcRenderer.invoke(CHANNELS.collectionRename, input),
+  collectionDelete: (id) => ipcRenderer.invoke(CHANNELS.collectionDelete, id),
+  collectionMembership: (input) => ipcRenderer.invoke(CHANNELS.collectionMembership, input),
+};
+contextBridge.exposeInMainWorld('foliuna', Object.freeze(api));

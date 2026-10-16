@@ -1,0 +1,38 @@
+name: Windows verification
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '24.18.0'
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run check
+      - run: npm run package:win
+      - run: npm run test:packaged
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: Foliuna-Windows-unsigned-candidate
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+          path: |
+            release/Foliuna-*.exe
+            release/Foliuna-*.zip
+            release/SHA256SUMS.txt
+            release/package-verification.json
+            release/packaged-smoke.json

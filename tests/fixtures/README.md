@@ -1,0 +1,1 @@
+The PNGs and minimal one-frame SWF in `media-app.cjs` are generated locally. `clip.webm` is a one-second 160×90 solid-color VP8 video and `clip.gif` is a two-frame 32×32 test pattern, both generated with FFmpeg's built-in sources. They contain no downloaded artwork or account data. Default tests replace transport responses and never contact e621/CDNs.

@@ -1,0 +1,43 @@
+appId: io.github.justypixels.foliuna
+productName: Foliuna
+copyright: Copyright © 2026 JustyPixels
+directories:
+  app: work/package
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - licenses/**/*
+  - icon.png
+  - LICENSE
+  - THIRD-PARTY-NOTICES.md
+  - '!node_modules{,/**/*}'
+asar: true
+compression: normal
+npmRebuild: false
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: zip
+      arch: [x64]
+  artifactName: Foliuna-${version}-Windows-${arch}.${ext}
+nsis:
+  artifactName: Foliuna-${version}-Windows-${arch}-Setup.${ext}
+  oneClick: false
+  perMachine: false
+  allowElevation: false
+  allowToChangeInstallationDirectory: true
+  runAfterFinish: false
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: false
+publish: null
