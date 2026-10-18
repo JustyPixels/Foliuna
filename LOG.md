@@ -225,3 +225,11 @@ Actual verification: node scripts/build-site.mjs resolved the existing v0.5.0-rc
 ## 2026-10-18 — Hosted Android SDK setup correction
 
 First GitHub Android matrix failed before compilation because the Ubuntu hosted image did not provide sdkmanager on PATH. Added a pinned Android SDK setup action using classic command-line tools 16 compatible with the emulator runner; no app checks were bypassed. Removed the proven-unused template activity layout and cleaned generated-template whitespace. Website natural mode now preserves the original fictional artwork proportions. Hosted rerun is pending; local API 26/36 and phone tests remain recorded above.
+
+## 2026-10-18 — Complete SAF export and tablet/Back verification
+
+Extended native tests to create an actual destination using Android's document picker on owned emulators, verify exact original/sidecar/collection filenames, and restore that SAF-produced ZIP with the Windows importer. Export now supplies correct media/JSON MIME types and rejects destination-provider filename changes. Both snapshot and real SAF fixtures passed Windows reconstruction with no provider access. Physical-phone tests continue to cancel the picker without choosing a personal directory.
+
+Tablet testing exposed Android 16's large-screen orientation policy: activity orientation requests can be ignored, so emulator tests now rotate the virtual device and restore its orientation. Hosted tests also exposed Back/native-dialog/keyboard timing differences. Wait for App Back listener registration before mounting React, handle native fullscreen close as well as cancel, and explicitly dismiss the test keyboard between cases. Native plugin executors stop with the Activity and each Activity retains its own service instance.
+
+Actual verification: the complete 10-test suite passed on the API 36 tablet emulator after these changes. Real SAF export and both Windows importer verifiers passed. The public GitHub Pages deployment passed live 360/768/1440 browser checks; hosted Pages and Windows workflows passed at 7035e2b. The prior hosted Android run reached device tests but failed Back behavior; the corrected full matrix remains to be rerun. No failure was suppressed or represented as a pass.

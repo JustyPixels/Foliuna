@@ -53,6 +53,7 @@ jobs:
           script: |
             npm run android:test
             node scripts/verify-android-export.mjs
+            node scripts/verify-android-export.mjs --saf
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: success()
         with:
@@ -63,4 +64,13 @@ jobs:
             release/android/*.apk
             release/android/SHA256SUMS.txt
             work/android-export-verification.json
+            work/android-saf-export-verification.json
+            android/app/build/outputs/androidTest-results/connected/debug/**/*.xml
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: failure()
+        with:
+          name: Android-test-report-API-${{ matrix.api }}
+          retention-days: 7
+          path: |
+            android/app/build/reports/androidTests
             android/app/build/outputs/androidTest-results/connected/debug/**/*.xml

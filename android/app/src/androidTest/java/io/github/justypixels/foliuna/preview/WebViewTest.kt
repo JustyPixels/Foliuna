@@ -17,13 +17,14 @@ import android.webkit.WebView
 
 @RunWith(AndroidJUnit4::class)
 class WebViewTest {
+    private val emulated = android.os.Build.HARDWARE in listOf("goldfish", "ranchu")
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private lateinit var web: WebView
     private fun js(expression: String): String {
         val latch = CountDownLatch(1); var result = ""
         instrumentation.runOnMainSync { web.evaluateJavascript(expression) { result = it; latch.countDown() } }
-        check(latch.await(10, TimeUnit.SECONDS)) { "WebView did not answer" }
+        check(latch.await(30, TimeUnit.SECONDS)) { "WebView did not answer: $expression" }
         return result
     }
     private fun waitFor(expression: String) {
@@ -70,7 +71,7 @@ class WebViewTest {
                 waitFor("!!window.foliuna && document.querySelectorAll('.nav-item').length===3 && !document.body.innerText.includes('Opening library')")
                 action(scenario)
             }
-        } finally { state.archive.close(); MainActivity.testServices = null; root.deleteRecursively() }
+        } finally { if (emulated) UiDevice.getInstance(instrumentation).unfreezeRotation(); state.archive.close(); MainActivity.testServices = null; root.deleteRecursively() }
     }
     @Test fun bridgeIsolationAndRealUiJourney() = run {
         assertEquals("android", promise("window.foliuna.platform()").getJSONObject("value").text("name"))
@@ -115,10 +116,13 @@ class WebViewTest {
         UiDevice.getInstance(instrumentation).click(point.getDouble("x").toInt() + offset[0], point.getDouble("y").toInt() + offset[1])
         UiDevice.getInstance(instrumentation).pressKeyCode(android.view.KeyEvent.KEYCODE_F)
         waitFor("document.querySelector('#tags').value.toLowerCase().includes('f')")
-        scenario.onActivity { it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
+        js("document.activeElement.blur()")
+        instrumentation.runOnMainSync { (context.getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager).hideSoftInputFromWindow(web.windowToken, 0); web.clearFocus() }
+        instrumentation.waitForIdleSync()
+        if (emulated) UiDevice.getInstance(instrumentation).setOrientationLeft() else scenario.onActivity { it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
         waitFor("window.innerWidth>window.innerHeight")
         assertEquals("false", js("document.documentElement.scrollWidth>window.innerWidth"))
-        scenario.onActivity { it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+        if (emulated) UiDevice.getInstance(instrumentation).setOrientationNatural() else scenario.onActivity { it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
         waitFor("window.innerHeight>window.innerWidth")
         assertEquals("false", js("document.documentElement.scrollWidth>window.innerWidth"))
     }
@@ -135,5 +139,52 @@ class WebViewTest {
         assertTrue(local.text("originalUrl").startsWith("https://localhost/foliuna/gallery/"))
         js("document.querySelector('#test-video').src=" + JSONObject.quote(local.text("originalUrl")) + ";document.querySelector('#test-video').play().catch(function(){})")
         waitFor("document.querySelector('#test-video').videoWidth===160 && document.querySelector('#test-video').currentTime>0")
+    }
+    @Test fun safDestinationProducesPortableFiles() {
+        org.junit.Assume.assumeTrue("Use only owned emulators for automatic destination selection", emulated)
+        run {
+            val saved = promise("window.foliuna.downloadPost({provider:'e621',id:42})").getJSONObject("value")
+            val created = promise("window.foliuna.collectionCreate({name:'Forest'})").getJSONArray("value").getJSONObject(0)
+            assertTrue(promise("window.foliuna.collectionMembership({id:" + created.getLong("id") + ",sha256:" + JSONObject.quote(saved.text("sha256")) + ",present:true})").getBoolean("ok"))
+            click("'Settings'"); waitFor("(document.querySelector('dialog[open]')||{innerText:''}).innerText.includes('Export library')")
+            click("'Export library…'")
+            val device = UiDevice.getInstance(instrumentation)
+            fun text(pattern: String): androidx.test.uiautomator.UiObject2 = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(java.util.regex.Pattern.compile(pattern))), 10000) ?: throw AssertionError("Destination picker missing: $pattern")
+            val folderName = "Foliuna-export-test-" + System.nanoTime()
+            try {
+                device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.desc("Show roots")), 10000)?.click()
+                text("(?i)Downloads?").click()
+                val newFolder = device.findObject(androidx.test.uiautomator.By.desc(java.util.regex.Pattern.compile("(?i)(Create )?new folder")))
+                if (newFolder != null) newFolder.click() else {
+                    (device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.desc("More options")), 10000) ?: throw AssertionError("No folder menu")).click()
+                    text("New folder").click()
+                }
+                val name = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.clazz("android.widget.EditText")), 10000) ?: throw AssertionError("No folder name field")
+                name.text = folderName
+                text("(?i)OK|CREATE").click()
+                text("(?i)USE THIS FOLDER|SELECT").click()
+                device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(java.util.regex.Pattern.compile("(?i)ALLOW"))), 3000)?.click()
+                waitFor("document.body.innerText.includes('Export complete')")
+                val uri = android.provider.DocumentsContract.buildTreeDocumentUri("com.android.externalstorage.documents", "primary:Download/$folderName")
+                val parent = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)!!
+                val folder = parent.listFiles().single { it.isDirectory }
+                assertNull(folder.findFile("EXPORT-INCOMPLETE.txt"))
+                val media = folder.findFile("media")!!
+                assertTrue(media.listFiles().any { it.name == saved.text("sha256") + ".png" })
+                assertNotNull(folder.findFile(".foliuna")!!.findFile("collections.json"))
+                androidx.test.platform.io.PlatformTestStorageRegistry.getInstance().openOutputFile("android-saf-export.zip").use { output ->
+                    java.util.zip.ZipOutputStream(output).use { zip ->
+                        fun copy(directory: androidx.documentfile.provider.DocumentFile, prefix: String) {
+                            directory.listFiles().forEach { file ->
+                                val path = prefix + file.name!!
+                                if (file.isDirectory) copy(file, "$path/") else { zip.putNextEntry(java.util.zip.ZipEntry(path)); context.contentResolver.openInputStream(file.uri)!!.use { it.copyTo(zip) }; zip.closeEntry() }
+                            }
+                        }
+                        copy(folder, "")
+                    }
+                }
+                assertTrue(parent.delete())
+            } catch (error: Throwable) { screenshot("saf-picker-failure"); throw error }
+        }
     }
 }

@@ -25,7 +25,7 @@ try {
     page.on('request', (request) => requested.push(request.url()));
     page.on('pageerror', (error) => errors.push(error.message));
     page.on('response', (response) => { if (response.status() >= 400) failures.push(response.url()); });
-    const origin = 'http://127.0.0.1:' + server.address().port;
+    const origin = process.env.FOLIUNA_SITE_URL ? new URL(process.env.FOLIUNA_SITE_URL).origin : 'http://127.0.0.1:' + server.address().port;
     await page.goto(origin + '/Foliuna/', { waitUntil: 'networkidle' });
     assert.equal(await page.locator('.demo-card').count(), 6);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

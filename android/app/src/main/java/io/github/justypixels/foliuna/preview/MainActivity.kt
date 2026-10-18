@@ -19,7 +19,7 @@ class MainActivity : BridgeActivity() {
         // Set only from native instrumentation, never through intents or the WebView.
         internal var testServices: Services? = null
     }
-    val services: Services get() = testServices ?: instance ?: synchronized(MainActivity::class.java) { instance ?: Services(applicationContext).also { instance = it } }
+    val services: Services by lazy { testServices ?: instance ?: synchronized(MainActivity::class.java) { instance ?: Services(applicationContext).also { instance = it } } }
     override fun onCreate(state: Bundle?) {
         registerPlugin(DisabledHttp::class.java); registerPlugin(DisabledCookies::class.java); registerPlugin(DisabledWebView::class.java); registerPlugin(FoliunaPlugin::class.java)
         super.onCreate(state)

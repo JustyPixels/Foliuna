@@ -6,7 +6,7 @@ import './android.css';
 type NativeApi = { [K in keyof FoliunaApi]: (options?: { input?: unknown }) => ReturnType<FoliunaApi[K]> };
 const native = registerPlugin<NativeApi>('Foliuna');
 // Keep this explicit: no arbitrary native method or generic fetch capability.
-export function initializeAndroid() {
+export async function initializeAndroid() {
   const api: FoliunaApi = {
     platform: () => native.platform(), exportLibrary: () => native.exportLibrary(),
     search: (input) => native.search({ input }), getPost: (input) => native.getPost({ input }),
@@ -32,7 +32,7 @@ export function initializeAndroid() {
   };
   Object.defineProperty(window, 'foliuna', { value: Object.freeze(api), writable: false, configurable: false });
   document.documentElement.dataset.platform = 'android';
-  void App.addListener('backButton', () => {
+  await App.addListener('backButton', () => {
     const dialogs = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')];
     const dialog = dialogs[dialogs.length - 1];
     if (dialog) { dialog.dispatchEvent(new Event('cancel', { bubbles: false, cancelable: true })); return; }

@@ -25,6 +25,7 @@ import java.time.Instant
 class FoliunaPlugin : Plugin() {
     private val executor = ThreadPoolExecutor(4, 4, 30, TimeUnit.SECONDS, ArrayBlockingQueue(64))
     private val services get() = (activity as MainActivity).services
+    override fun handleOnDestroy() { executor.shutdownNow(); super.handleOnDestroy() }
     private fun trusted(): Boolean = (activity as MainActivity).trustedPage
     private fun resolve(call: PluginCall, value: Any?) { call.resolve(JSObject(j("ok" to true, "value" to value).toString())) }
     private fun reject(call: PluginCall, error: Exception) {
@@ -91,9 +92,11 @@ class FoliunaPlugin : Plugin() {
             val count = services.archive.exportFiles { path, source ->
                 var directory = folder
                 val parts = path.split('/')
-                parts.dropLast(1).forEach { part -> directory = directory.findFile(part) ?: directory.createDirectory(part) ?: fail("EXPORT", "Could not create export directory.") }
+                parts.dropLast(1).forEach { part -> directory = directory.findFile(part) ?: directory.createDirectory(part) ?: fail("EXPORT", "Could not create export directory."); checkInput(directory.name == part, "The destination changed an archive folder name.") }
                 checkInput(directory.findFile(parts.last()) == null, "Export would replace a file.")
-                val file = directory.createFile("application/octet-stream", parts.last()) ?: fail("EXPORT", "Could not create exported file.")
+                val mime = if (path.endsWith(".json")) "application/json" else mediaTypes[source.extension.lowercase()] ?: "application/octet-stream"
+                val file = directory.createFile(mime, parts.last()) ?: fail("EXPORT", "Could not create exported file.")
+                checkInput(file.name == parts.last(), "The destination changed an archive filename. Choose another destination.")
                 context.contentResolver.openOutputStream(file.uri, "w")?.use { output ->
                     source.inputStream().use { input ->
                         val buffer = ByteArray(65536)
