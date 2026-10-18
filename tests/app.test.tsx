@@ -16,6 +16,8 @@ beforeEach(() => {
   search.mockReset().mockImplementation(async (request) => ({ ok: true, value: await demo.search(request) }));
   getPost.mockReset().mockImplementation(async (request) => ({ ok: true, value: await demo.getPost(request.id) }));
   window.foliuna = { search, getPost,
+    platform: vi.fn(),
+    exportLibrary: vi.fn(),
     libraryStatus: vi.fn().mockResolvedValue({ ok: true, value: { assets: 0, schemaVersion: 2, demo: true, root: null, issue: null } }),
     openPost: vi.fn().mockResolvedValue({ ok: true, value: null }),
     getSettings: vi.fn().mockResolvedValue({ ok: true, value: { encryptionAvailable: true, credentials: [

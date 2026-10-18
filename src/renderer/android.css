@@ -1,0 +1,65 @@
+html[data-platform="android"] { color-scheme: dark; }
+html[data-platform="android"] body { min-width: 320px; overscroll-behavior: none; }
+html[data-platform="android"] .app-shell { display: block; min-height: 100dvh; }
+html[data-platform="android"] .sidebar { position: fixed; inset: auto 0 0; width: 100%; height: auto; z-index: 10; padding: 6px 8px max(6px, env(safe-area-inset-bottom)); border-top: 1px solid #29463b; border-right: 0; }
+html[data-platform="android"] .sidebar .brand,
+html[data-platform="android"] .sidebar .nav-label,
+html[data-platform="android"] .sidebar-footer { display: none; }
+html[data-platform="android"] .sidebar nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+html[data-platform="android"] .nav-item { display: flex; flex-direction: column; justify-content: center; gap: 2px; margin: 0; padding: 8px 2px; font-size: 12px; }
+html[data-platform="android"] .nav-item span { font-size: 20px; }
+html[data-platform="android"] .workspace { margin: 0; width: 100%; min-width: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(82px + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
+html[data-platform="android"] .topbar { position: sticky; top: 0; z-index: 5; height: auto; min-height: 60px; padding: 8px 16px; background: #101e19; }
+html[data-platform="android"] .topbar-right { gap: 6px; }
+html[data-platform="android"] .topbar-right button { width: 44px; height: 44px; padding: 0; font-size: 21px; }
+html[data-platform="android"] .topbar > span { font-size: 0; }
+html[data-platform="android"] .topbar > span strong { font-size: 18px; }
+html[data-platform="android"] .topbar .slash, html[data-platform="android"] .library-state, html[data-platform="android"] .mode-badge { display: none; }
+html[data-platform="android"] main { padding: 20px 16px; }
+html[data-platform="android"] button, html[data-platform="android"] select, html[data-platform="android"] input { min-height: 44px; }
+html[data-platform="android"] .intro { margin-bottom: 20px; }
+html[data-platform="android"] .intro h1 { font-size: 32px; }
+html[data-platform="android"] .intro-leaf { display: none; }
+html[data-platform="android"] .search-panel { padding: 16px; }
+html[data-platform="android"] .search-panel form { display: flex; flex-wrap: wrap; gap: 12px; }
+html[data-platform="android"] .source-field, html[data-platform="android"] .query-field { width: 100%; min-width: 0; flex: 1 1 100%; }
+html[data-platform="android"] .search-panel form > button { flex: 1 1 100%; }
+html[data-platform="android"] .provider-picker { flex-wrap: wrap; }
+html[data-platform="android"] .provider-picker select { flex: 1; min-width: 130px; }
+html[data-platform="android"] .search-bottom { display: none; }
+html[data-platform="android"] .results-heading { flex-wrap: wrap; gap: 12px; }
+html[data-platform="android"] .results-heading > div { width: 100%; }
+html[data-platform="android"] .results-label { display: none; }
+html[data-platform="android"] .post-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+@supports not (height: 100dvh) {
+  html[data-platform="android"] .app-shell { min-height: 100vh; }
+  html[data-platform="android"] .details-dialog { max-height: 100vh; height: 100vh; }
+  html[data-platform="android"] .detail-preview img, html[data-platform="android"] .detail-preview video { max-height: 65vh; }
+  .mobile-viewer { height: 100vh; max-height: 100vh; }
+}
+html[data-platform="android"] .details-dialog { width: 100%; max-width: 100%; max-height: 100dvh; height: 100dvh; margin: 0; border-radius: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+html[data-platform="android"] .details-content { padding: 16px; }
+html[data-platform="android"] .detail-grid { display: block; }
+html[data-platform="android"] .detail-info { margin-top: 20px; }
+html[data-platform="android"] .post-navigation { gap: 8px; }
+html[data-platform="android"] .post-navigation button { flex: 1; font-size: 12px; padding: 8px; }
+html[data-platform="android"] .viewer-controls { flex-wrap: wrap; }
+html[data-platform="android"] .detail-preview { max-height: none; }
+html[data-platform="android"] .detail-preview img { max-height: 65dvh; width: 100%; object-fit: contain; }
+html[data-platform="android"] .detail-preview video { width: 100%; max-height: 65dvh; }
+html[data-platform="android"] .folder-path { overflow-wrap: anywhere; }
+html[data-platform="android"] .tag-button { padding: 10px; }
+.mobile-viewer { position: fixed; inset: 0; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; border: 0; border-radius: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: #080e0b; color: #e1efe6; }
+.mobile-viewer header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; }
+.mobile-viewer header span { flex: 1; }
+.mobile-media { height: calc(100% - 68px); display: grid; place-items: center; overflow: auto; touch-action: pan-x pan-y pinch-zoom; }
+.mobile-media img, .mobile-media video { width: 100%; height: 100%; max-height: 100%; object-fit: contain; }
+.mobile-media.zoomed { display: block; }
+.mobile-media.zoomed img { width: 200%; height: auto; max-width: none; max-height: none; }
+@media (min-width: 700px) {
+  html[data-platform="android"] main { max-width: 1400px; margin: auto; padding: 28px; }
+  html[data-platform="android"] .post-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  html[data-platform="android"] .detail-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px,1fr); }
+  html[data-platform="android"] .detail-info { margin-top: 0; }
+  html[data-platform="android"] .details-dialog { width: min(1100px, 96%); margin: auto; max-height: 94dvh; height: auto; border-radius: 18px; }
+}

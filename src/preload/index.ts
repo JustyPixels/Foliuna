@@ -2,6 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { CHANNELS, type FoliunaApi } from '../shared/contracts';
 
 const api: FoliunaApi = {
+  platform: () => ipcRenderer.invoke(CHANNELS.platform),
+  exportLibrary: () => ipcRenderer.invoke(CHANNELS.exportLibrary),
   search: (request) => ipcRenderer.invoke(CHANNELS.search, request),
   getPost: (request) => ipcRenderer.invoke(CHANNELS.getPost, request),
   libraryStatus: () => ipcRenderer.invoke(CHANNELS.libraryStatus),

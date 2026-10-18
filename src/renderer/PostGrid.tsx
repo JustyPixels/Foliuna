@@ -3,11 +3,12 @@ import { PostImage } from './PostImage';
 import { memo, useEffect, useState } from 'react';
 import { GalleryVideoPreview } from './GalleryVideoPreview';
 import { cacheThumbnail } from './thumbnail';
+import { isAndroid } from './platform';
 const ratingNames = { s: 'Safe', q: 'Questionable', e: 'Explicit' };
 
 type GridProps = { posts: Post[]; mode: Preferences['gridMode']; busy: boolean; onSelect(post: Post): void };
 export const PostGrid = memo(function PostGrid({ posts, mode, busy, onSelect }: GridProps) {
-  const count = () => window.innerWidth >= 1600 ? 5 : window.innerWidth <= 1200 ? 3 : 4;
+  const count = () => isAndroid ? window.innerWidth < 700 ? 2 : 4 : window.innerWidth >= 1600 ? 5 : window.innerWidth <= 1200 ? 3 : 4;
   const [columns, setColumns] = useState(count);
   useEffect(() => {
     const resize = () => setColumns(count()); window.addEventListener('resize', resize);

@@ -46,8 +46,12 @@ export interface GalleryRequest { tags: string; page: number; safeOnly?: boolean
 export interface Collection { id: number; name: string; assets: number; pending: number; contains?: boolean }
 export interface LibraryReport { checked: number; imported: number; recovered: number; missing: number; invalid: number; conflicts: number; issues: { file: string; message: string }[] }
 export type Result<T> = { ok: true; value: T } | { ok: false; error: { code: string; message: string } };
+export interface PlatformCapabilities { name: 'windows' | 'android'; chooseLibrary: boolean; importSidecars: boolean; exportLibrary: boolean; floatingViewer: boolean; flash: boolean }
+export const WINDOWS_CAPABILITIES: PlatformCapabilities = { name: 'windows', chooseLibrary: true, importSidecars: true, exportLibrary: false, floatingViewer: true, flash: true };
 
 export interface FoliunaApi {
+  platform(): Promise<Result<PlatformCapabilities>>;
+  exportLibrary(): Promise<Result<{ exported: number; cancelled: boolean }>>;
   search(request: SearchRequest): Promise<Result<SearchResult>>;
   getPost(request: PostRequest): Promise<Result<Post>>;
   libraryStatus(): Promise<Result<LibraryStatus>>;
@@ -80,6 +84,8 @@ export interface FoliunaApi {
 }
 
 export const CHANNELS = {
+  platform: 'foliuna:platform',
+  exportLibrary: 'foliuna:export-library',
   search: 'foliuna:search',
   getPost: 'foliuna:get-post',
   libraryStatus: 'foliuna:library-status',

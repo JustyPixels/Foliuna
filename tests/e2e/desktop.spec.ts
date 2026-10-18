@@ -49,7 +49,7 @@ test('Windows desktop: local search journey, database startup and Electron isola
     expect(sandboxed).toBe(true);
     expect(await page.evaluate(() => ({ require: typeof (window as unknown as { require?: unknown }).require,
       process: typeof (window as unknown as { process?: unknown }).process, methods: Object.keys(window.foliuna).sort() })))
-      .toEqual({ require: 'undefined', process: 'undefined', methods: ['cacheThumbnail', 'cancelDownload', 'chooseLibrary', 'collectionCreate', 'collectionDelete', 'collectionList', 'collectionMembership', 'collectionRename', 'downloadPost', 'galleryPost', 'gallerySearch', 'galleryTags', 'getAccount', 'getPost', 'getPreferences', 'getSettings', 'importSidecars', 'libraryStatus', 'openPost', 'openViewer', 'reconcileLibrary', 'removeCredentials', 'removeProvider', 'saveCredentials', 'savePreferences', 'saveProvider', 'search', 'suggestTags', 'testConnection'] });
+      .toEqual({ require: 'undefined', process: 'undefined', methods: ['cacheThumbnail', 'cancelDownload', 'chooseLibrary', 'collectionCreate', 'collectionDelete', 'collectionList', 'collectionMembership', 'collectionRename', 'downloadPost', 'exportLibrary', 'galleryPost', 'gallerySearch', 'galleryTags', 'getAccount', 'getPost', 'getPreferences', 'getSettings', 'importSidecars', 'libraryStatus', 'openPost', 'openViewer', 'platform', 'reconcileLibrary', 'removeCredentials', 'removeProvider', 'saveCredentials', 'savePreferences', 'saveProvider', 'search', 'suggestTags', 'testConnection'] });
     expect(await page.evaluate(() => window.foliuna.search({ provider: 'e926', tags: '', page: -1 })))
       .toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } });
     const policy = await app.evaluate(async ({ session }) => {

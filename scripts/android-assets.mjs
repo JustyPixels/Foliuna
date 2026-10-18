@@ -1,0 +1,23 @@
+import { build } from 'esbuild';
+import { mkdir, writeFile, rm, cp } from 'node:fs/promises';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
+
+const directory = 'android/app/src/main/assets/foliuna';
+await mkdir(directory, { recursive: true });
+await mkdir('work', { recursive: true });
+const output = path.resolve('work/android-providers.mjs');
+await build({ entryPoints: ['src/shared/providers.ts'], outfile: output, bundle: true, platform: 'node', format: 'esm' });
+const { BUILTIN_PROVIDERS } = await import(pathToFileURL(output).href + '?t=' + Date.now());
+await writeFile(directory + '/providers.json', JSON.stringify(BUILTIN_PROVIDERS));
+await cp('THIRD-PARTY-NOTICES.md', directory + '/NOTICE.txt');
+await cp('LICENSE', directory + '/Foliuna-LICENSE.txt');
+for (const name of ['@capacitor/core', '@capacitor/android', '@capacitor/app', 'react', 'react-dom', 'scheduler']) await cp('node_modules/' + name + '/LICENSE', directory + '/' + name.replaceAll('/', '-') + '-LICENSE.txt');
+await cp('node_modules/typescript/LICENSE.txt', directory + '/Apache-2.0.txt');
+await rm(output);
+await build({ entryPoints: ['tests/fixtures/compatibility.ts'], outfile: output, bundle: true, platform: 'node', format: 'esm' });
+const { compatibility, previewPng } = await import(pathToFileURL(output).href + '?fixtures=' + Date.now());
+await mkdir('android/app/src/androidTest/assets/generated', { recursive: true });
+await writeFile('android/app/src/androidTest/assets/generated/providers.json', JSON.stringify({ compatibility, previewPng }));
+for (const file of ['clip.webm', 'clip.gif']) await cp('tests/fixtures/' + file, 'android/app/src/androidTest/assets/generated/' + file);
+await rm(output);

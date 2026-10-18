@@ -19,3 +19,9 @@ release/
 /library.json
 /preferences.json
 /boorus.json
+*.jks
+*.keystore
+site/dist/
+/android/app/src/main/assets/foliuna/
+/android/app/src/main/assets/fixtures/
+/android/app/src/androidTest/assets/generated/

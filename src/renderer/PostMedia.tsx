@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import type { Post } from '../shared/contracts';
 import { PostImage } from './PostImage';
+import { capabilities } from './platform';
 
 export function PostMedia({ post, size }: { post: Post; size: 'sample' | 'original' }) {
   const [flash, setFlash] = useState(false);
   const [failed, setFailed] = useState(false);
+  if (post.file.extension === 'swf' && !capabilities.flash) return <div><PostImage urls={[post.sampleUrl, post.previewUrl]} alt={`Flash preview of post ${post.id}`} /><p>Flash playback is available on Windows. The original can still be archived.</p></div>;
   if (['webm', 'mp4'].includes(post.file.extension) && post.originalUrl) return <>
     <video key={post.originalUrl} controls preload="none" poster={post.sampleUrl ?? post.previewUrl ?? undefined} src={post.originalUrl}
       aria-label={`Video of post ${post.id}`} onError={() => setFailed(true)} />

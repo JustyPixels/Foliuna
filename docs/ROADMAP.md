@@ -100,3 +100,17 @@ Actual local/packaged/installer verification and publishing outcomes are recorde
 Configurable blacklists, automatic updates, other encrypted credential backends and extra providers
 require separately scoped increments. Avoid sync, telemetry, cloud accounts, plugins and automatic
 scraping until the search-to-archive loop is validated in everyday use.
+
+## Android testing preview and public showcase
+
+- [x] Capacitor 8/Kotlin platform boundary sharing React, provider definitions, artwork and compatibility fixtures with Windows.
+- [x] Eight built-ins/custom Danbooru/Gelbooru, Keystore credentials, native paced/checked network/media, isolated bundled WebView.
+- [x] Private SQLite archive, explicit foreground transfers, SHA-256 deduplication, immutable history, portable sidecars, recovery and offline Collections.
+- [x] Mobile tabs/touch grids, details navigation, sample/full-size, GIF/video, fullscreen return, Back and rotation.
+- [x] Explicit SAF snapshot export, exclusion of profile secrets/settings, and actual Windows importer reconstruction of Gallery/Collections.
+- [x] API 26/36 emulator and authorized physical Moto g14 API 34 testing; Windows regressions/packaging retained.
+- [x] README icon/screenshots, responsive fictional interactive website, release-derived download links, pinned Android/Pages workflows.
+- [ ] Publish Android 0.1.0-preview.1 debug APK/checksum/verification notes after final source/CI checks; retain existing Windows release.
+- [ ] Confirm deployed GitHub Pages project-path and real release links.
+
+The preview uses io.github.justypixels.foliuna.preview and disposable debug signing. Export before uninstalling or changing certificates. No production signing secrets, Play submission, Flash on Android, floating Android windows, background downloads, incoming Android libraries or synchronization. Authenticated live provider access and broad device/storage testing remain unverified.

@@ -1,4 +1,4 @@
-import { CHANNELS, type Result, type ViewerRequest, type Account } from '../shared/contracts';
+import { CHANNELS, WINDOWS_CAPABILITIES, type Result, type ViewerRequest, type Account } from '../shared/contracts';
 import { AppError, postRequest, postUrl, provider, record, searchRequest } from '../shared/validation';
 import type { BooruAdapter } from './adapters/types';
 import type { Provider } from '../shared/contracts';
@@ -45,6 +45,8 @@ export function actions({ adapters, library, credentials, client, demo, openExte
   const definitions = () => providers?.list() ?? BUILTIN_PROVIDERS;
   const definition = (id: string) => providers ? providers.get(id) : definitionFor(id);
   return {
+    [CHANNELS.platform]: () => WINDOWS_CAPABILITIES,
+    [CHANNELS.exportLibrary]: () => { throw new AppError('UNSUPPORTED', 'On Windows, back up the complete archive folder.'); },
     [CHANNELS.search]: async (input: unknown) => {
       const request = searchRequest(input);
       const adapter = adapters[request.provider];

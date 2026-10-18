@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { TAG_CATEGORIES, type Post } from '../shared/contracts';
 import { useDialog } from './useDialog';
 import { PostMedia } from './PostMedia';
+import { capabilities } from './platform';
+import { MobileViewer } from './MobileViewer';
 const ratingNames = { s: 'Safe', q: 'Questionable', e: 'Explicit' };
 const size = (bytes: number) => bytes > 0 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : 'Size not supplied';
 
@@ -19,12 +21,13 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
   const [openError, setOpenError] = useState('');
   const [imageSize, setImageSize] = useState<'sample' | 'original'>('sample');
   const [tagMenu, setTagMenu] = useState<string | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const tagOpener = useRef<HTMLButtonElement | null>(null);
   function closeTagMenu() { setTagMenu(null); tagOpener.current?.focus(); }
   const loading = !post && !error;
   useEffect(() => {
     let active = true;
-    setError(''); setPost(null); setImageSize('sample'); setTagMenu(null); setOpenError('');
+    setError(''); setPost(null); setImageSize('sample'); setTagMenu(null); setOpenError(''); setFullscreen(false);
     if (ref.current) ref.current.scrollTop = 0;
     (selected.archive ? window.foliuna.galleryPost({ sha256: selected.archive.sha256, provider: selected.provider, id: selected.id }) : window.foliuna.getPost({ provider: selected.provider, id: selected.id })).then((response) => {
       if (!active) return;
@@ -56,7 +59,7 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
       {!post && !error && <p role="status">Loading post details…</p>}
       {error && <div role="alert" className="error-message">{error}<button onClick={() => setRetry((value) => value + 1)}>Retry details</button></div>}
       {post && <div className="detail-grid"><div className="viewer-column"><div className="viewer-controls"><label htmlFor="image-size">Image size</label><select id="image-size" value={imageSize} onChange={(event) => setImageSize(event.target.value as 'sample' | 'original')} disabled={['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension)}><option value="sample">Sample</option><option value="original" disabled={!post.originalUrl}>Full size</option></select>
-        <button disabled={post.unavailable} onClick={() => void window.foliuna.openViewer(post.archive ? { archiveSha: post.archive.sha256, source: { provider: post.provider, id: post.id }, size: imageSize } : { provider: post.provider, id: post.id, size: imageSize }).then((response) => { if (!response.ok) setOpenError(response.error.message); }).catch(() => setOpenError('Could not open the media window.'))}>Open media window ↗</button></div>
+        <button disabled={post.unavailable} onClick={() => { if (!capabilities.floatingViewer) { setFullscreen(true); return; } void window.foliuna.openViewer(post.archive ? { archiveSha: post.archive.sha256, source: { provider: post.provider, id: post.id }, size: imageSize } : { provider: post.provider, id: post.id, size: imageSize }).then((response) => { if (!response.ok) setOpenError(response.error.message); }).catch(() => setOpenError('Could not open the media window.')); }}>{capabilities.floatingViewer ? 'Open media window ↗' : 'Fullscreen'}</button></div>
         <div className="detail-preview"><PostMedia key={`${post.provider}:${post.id}`} post={post} size={imageSize} /><span>{post.archive ? 'Archived original' : ['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension) ? 'Original media' : imageSize === 'original' ? 'Full-resolution image' : 'Sample image'}{!post.archive && ' · Unsaved'}</span></div>
       </div>
         <div className="detail-info"><div className="detail-badges"><span className={`rating-badge rating-${post.rating}`}>{['s', 'sensitive'].includes(post.sourceRating ?? '') && post.source?.safeRating === 'g' ? 'Sensitive' : ratingNames[post.rating]}</span><span>{post.file.extension.toUpperCase()} · {size(post.file.size)}</span></div><dl><div><dt>Dimensions</dt><dd>{post.file.width} × {post.file.height}</dd></div><div><dt>Score / favorites</dt><dd>{post.score} / {post.favorites}</dd></div><div><dt>Posted</dt><dd>{post.createdAt && !Number.isNaN(Date.parse(post.createdAt)) ? new Date(post.createdAt).toLocaleDateString() : 'Unknown'}</dd></div></dl>
@@ -79,5 +82,6 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
 
         </div></div>}
     </div>
+    {fullscreen && post && <MobileViewer post={post} size={imageSize} onClose={() => setFullscreen(false)} />}
   </dialog>;
 }

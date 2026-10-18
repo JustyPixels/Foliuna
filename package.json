@@ -20,14 +20,23 @@
     "check": "npm run test && npm run build && playwright test",
     "icon": "node scripts/make-icon.mjs",
     "package:win": "npm run build && node scripts/prepare-package.mjs && electron-builder --win --x64 --publish never && node scripts/verify-package.mjs",
-    "test:packaged": "node scripts/smoke-packaged.mjs"
+    "test:packaged": "node scripts/smoke-packaged.mjs",
+    "android:build": "node scripts/android.mjs build",
+    "android:test": "node scripts/android.mjs test",
+    "android:lint": "node scripts/android.mjs lint",
+    "site:build": "node scripts/build-site.mjs",
+    "site:test": "node scripts/test-site.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
     "@ruffle-rs/ruffle": "0.7.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@electron/asar": "4.0.1",
     "@electron/fuses": "2.1.3",
     "@playwright/test": "^1.56.0",

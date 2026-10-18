@@ -10,3 +10,12 @@ React/React DOM/Scheduler, Vite and Ruffle licenses accompany the bundled app.
 Build and test tools are development dependencies and are not shipped as
 runtime Node modules. Consult package-lock.json for exact dependency versions.
 The app makes no ownership claim over media obtained from third-party sites.
+
+The Android preview additionally includes Capacitor core/Android/App (MIT),
+Kotlin standard library (Apache-2.0), AndroidX libraries including bundled SQLite
+(Apache-2.0, with SQLite public-domain engine), OkHttp/Okio (Apache-2.0), React
+and the Vite preload helper (MIT). Component notices, MIT licenses and the
+Apache-2.0 license are bundled under assets/foliuna in the APK. Versions are
+pinned in package-lock.json and android build files. Android Studio, SDK,
+emulators and instrumentation fixtures are build/test tools and are not shipped.
+Android does not bundle Electron, Node.js or the Windows Ruffle player.

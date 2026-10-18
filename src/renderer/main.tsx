@@ -1,5 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import './styles.css';
+declare const __FOLIUNA_ANDROID__: boolean;
 
-createRoot(document.getElementById('root')!).render(<App />);
+async function start() {
+  if (__FOLIUNA_ANDROID__) (await import('./android')).initializeAndroid();
+  createRoot(document.getElementById('root')!).render(<App />);
+}
+void start();

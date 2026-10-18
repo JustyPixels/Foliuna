@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { LibraryStatus, Result, Settings, Preferences, ProviderDefinition } from '../shared/contracts';
 import { BUILTIN_PROVIDERS } from '../shared/providers';
 import { useDialog } from './useDialog';
+import { capabilities, isAndroid } from './platform';
 
 export function SettingsDialog({ onClose, onLibrary, downloading, preferences, onPreferences, preferencesBusy, onProviders }: { onClose(): void; onLibrary(value: LibraryStatus): void; downloading: boolean; preferencesBusy: boolean; preferences: Preferences; onPreferences(value: Preferences): Promise<void>; onProviders?(value: ProviderDefinition[]): void }) {
   const ref = useDialog();
@@ -69,9 +70,10 @@ export function SettingsDialog({ onClose, onLibrary, downloading, preferences, o
           <label htmlFor="grid-mode">Image grid</label><select id="grid-mode" value={preferences.gridMode} disabled={busy || preferencesBusy} onChange={(event) => void onPreferences({ ...preferences, gridMode: event.target.value as Preferences['gridMode'] })}><option value="natural">Original proportions · flowing grid</option><option value="crop">Cropped images · aligned grid</option></select>
           <p className="settings-help">Applies to Discover, Gallery and Collections.</p>
         </div></section>
-        <section aria-labelledby="archive-settings"><h3 id="archive-settings">Archive folder</h3><p className="settings-help">Keep this entire folder together when moving or backing up your library.</p>
+        <section aria-labelledby="archive-settings"><h3 id="archive-settings">{isAndroid ? 'Private archive' : 'Archive folder'}</h3><p className="settings-help">{isAndroid ? 'Testing preview 0.1.0-preview.1. Export before uninstalling or changing APK signing identity: uninstalling removes the private archive. Downloads stop when the app leaves the foreground.' : 'Keep this entire folder together when moving or backing up your library.'}</p>
           <p className="folder-path">{settings.library.root ?? 'No archive folder selected.'}</p>
-          <button disabled={busy || downloading} onClick={() => void run(() => window.foliuna.chooseLibrary(), 'Archive selection checked. The current folder is shown above.')}>Choose archive folder</button>
+          {capabilities.chooseLibrary && <button disabled={busy || downloading} onClick={() => void run(() => window.foliuna.chooseLibrary(), 'Archive selection checked. The current folder is shown above.')}>Choose archive folder</button>}
+          {capabilities.exportLibrary && <button disabled={busy || downloading} onClick={() => void run(async () => { const result = await window.foliuna.exportLibrary(); if (result.ok && result.value.cancelled) return { ok: false, error: { code: 'CANCELLED', message: 'Export cancelled. Your archive is unchanged.' } }; return result; }, 'Export complete in a new Foliuna folder. Copy the complete folder to Windows, choose it as the archive, then Import sidecars.')}>Export library…</button>}
           {settings.library.issue && <p className="error-message">{settings.library.issue}</p>}
         </section>
         <section aria-labelledby="booru-settings"><h3 id="booru-settings">Booru connections</h3>
