@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Foliuna brings multi-booru discovery, an offline gallery, and a portable personal archive together on Windows and Android.">
+  <meta name="theme-color" content="#101814">
+  <title>Foliuna — Find it. Keep it. Make it yours.</title>
+  <link rel="icon" href="./assets/icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./demo.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><a class="wordmark" href="./"><img src="./assets/icon.png" width="40" height="40" alt="">Foliuna</a><nav aria-label="Main navigation"><a href="#explore">Try it</a><a href="#features">Features</a><a href="#download">Download</a><a href="https://github.com/JustyPixels/Foliuna">GitHub ↗</a></nav></header>
+<main id="main">
+  <section class="hero">
+    <div><p class="eyebrow">A LITTLE CURIOSITY. A LIBRARY OF YOUR OWN.</p><h1>Find it.<br>Keep it.<br><em>Make it yours.</em></h1><p class="lead">Search your favorite boorus. Save originals with their tags. Bring your collection back, even when you’re offline.</p><div class="actions"><a class="button primary" href="#download">Get Foliuna <span>↓</span></a><a class="button" href="#explore">Take a look around <span>↗</span></a></div><p class="quiet">Windows release candidate · Android testing preview</p></div>
+    <div class="hero-art"><div class="halo"></div><img class="hero-icon" src="./assets/icon.png" width="196" height="196" alt="Foliuna leaf icon"><div class="art-stack"><img src="./assets/fox.svg" alt="Fictional woodland fox illustration" width="400" height="300"><img src="./assets/deer.svg" alt="Fictional woodland deer illustration" width="400" height="300"></div><span class="art-note"><span class="dot"></span> A place for the things you find.</span></div>
+  </section>
+  <section id="features" class="feature-section"><p class="eyebrow">SEARCH → INSPECT → SAVE → COLLECT</p><h2>From a passing find<br>to a lasting favorite.</h2><div class="feature-grid">
+    <article><span class="feature-number">01 / DISCOVER</span><h3>Your sources, together.</h3><p>Eight built-in boorus, including e621, Danbooru, Gelbooru, Rule34.xxx and Safebooru. Add compatible custom sources. Safe-only search starts on.</p></article>
+    <article><span class="feature-number">02 / ARCHIVE</span><h3>Keep more than an image.</h3><p>Original files, categorized tags and source history stay together. Matching SHA-256 hashes share one original. Downloads start with your choice.</p></article>
+    <article><span class="feature-number">03 / COLLECT</span><h3>A gallery that travels.</h3><p>Search saved tags offline and organize Collections without extra copies. Portable sidecars preserve context. Export an Android archive to Windows.</p></article>
+  </div></section>
+  <section id="explore" class="demo-section"><div class="section-title"><div><p class="eyebrow">A SMALL PREVIEW OF THE EXPERIENCE</p><h2>Follow your curiosity.</h2></div><span class="pill">FICTIONAL DEMO</span></div>
+    <p class="quiet">This demonstration uses bundled fictional artwork. It makes no booru requests, downloads no media, and accepts no API keys.</p>
+    <div class="demo-workspace"><div class="demo-toolbar"><strong><img src="./assets/icon.png" alt="" width="28" height="28"> Discover</strong><span class="quiet">Local demo · safe only</span></div>
+      <form id="demo-search"><label for="demo-tags">SEARCH TAGS<input id="demo-tags" autocomplete="off" placeholder="Try fox, forest, deer or -wolf"></label><button type="submit" class="button primary">Search ↗</button></form>
+      <div class="demo-results-heading"><p id="demo-status" role="status" aria-live="polite"></p><button id="demo-layout" type="button" aria-pressed="false">Crop grid</button></div>
+      <div id="demo-grid" class="demo-grid natural"></div><p id="demo-empty" hidden>No matches. Try forest or fewer tags.</p>
+    </div>
+  </section>
+  <section class="screens-section"><div class="section-title"><div><p class="eyebrow">ONE FAMILIAR WORKSPACE</p><h2>Room to browse.<br>Space to keep.</h2></div><p class="quiet">The green Windows interface, adapted for touch on Android.</p></div><figure><img src="./assets/discover.png" alt="Foliuna Windows Discover interface with fictional woodland artwork" width="1440" height="1000" loading="lazy"><figcaption>Windows · fictional offline demonstration</figcaption></figure><div class="screen-pair"><figure><img src="./assets/gallery.png" alt="Offline Gallery with saved fixture media and library tools" loading="lazy" width="1440" height="1000"><figcaption>Offline Gallery</figcaption></figure><figure><img src="./assets/collections.png" alt="Collections organizing locally saved media" loading="lazy" width="1440" height="1000"><figcaption>Collections</figcaption></figure></div></section>
+  <section class="privacy-section"><div><p class="eyebrow">YOUR ARCHIVE, ON YOUR DEVICE</p><h2>Built with clear boundaries.</h2></div><div><p>No Foliuna account, analytics or cloud library. Your chosen providers receive search and media requests; their own rules and privacy policies apply. Keys are encrypted locally and sent only to their configured API.</p><p>Windows uses an isolated Electron interface. Android uses bundled UI, Android Keystore credentials and private storage. Export excludes saved keys and private settings.</p><p>Safe-only is a search filter, not a guarantee of site moderation. Foliuna does not bypass provider restrictions or grant rights to redistribute artwork.</p></div></section>
+  <section id="download" class="download-section"><p class="eyebrow">START YOUR OWN LIBRARY</p><h2>A home for your finds.</h2><div class="download-grid">
+    <article><h3>Windows</h3><p>Windows 10/11 · x64</p><a id="windows-download" class="button primary" href="https://github.com/JustyPixels/Foliuna/releases">View Windows releases ↗</a><p id="windows-version" class="quiet">Loading published release information…</p><p>Unsigned release candidate. Review the release notes and checksum before installing.</p></article>
+    <article><h3>Android</h3><p>Android 8.0+ · testing preview</p><a id="android-download" class="button" href="https://github.com/JustyPixels/Foliuna/releases">View preview status ↗</a><p id="android-version" class="quiet">Forthcoming — a download appears after its APK passes verification.</p><p>Debug-signed, separate preview app. Export before uninstalling or changing signing identity: uninstalling removes private archives. Foreground downloads only.</p></article>
+  </div><p class="installation">Install only from this project’s releases. Android may require permission for the installing app and additional developer verification steps depending on your device/region. Follow the <a href="https://developer.android.com/developer-verification/guides">current Android guidance</a> and the <a href="https://github.com/JustyPixels/Foliuna/blob/main/docs/ANDROID.md">preview installation and backup guide</a>. Android Studio/ADB is an option for testing builds. No production signing identity or Google Play release is provided.</p></section>
+</main>
+<footer><a class="wordmark" href="./"><img src="./assets/icon.png" alt="" width="32" height="32">Foliuna</a><p>Made by JustyPixels. Stay curious.</p><div><a href="https://github.com/JustyPixels/Foliuna">Source</a><a href="https://github.com/JustyPixels/Foliuna/issues">Questions & issues ↗</a></div></footer>
+<dialog id="demo-details" aria-labelledby="demo-post-title"><button class="dialog-close" aria-label="Close demo details">×</button><div class="demo-detail-image"><img id="demo-image" alt="" width="800" height="600"></div><div class="demo-detail-text"><p class="eyebrow">FICTIONAL DEMO POST</p><h2 id="demo-post-title"></h2><p id="demo-description"></p><h3>Tags</h3><div id="demo-post-tags"></div><button class="button" disabled>Demo · no real downloads</button></div></dialog>
+</body>
+</html>

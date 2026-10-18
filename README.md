@@ -1,6 +1,23 @@
 # Foliuna
 
-A Windows-first desktop booru searcher and personal archiver. Find posts by tag, inspect their metadata, and explicitly save originals with categorized tags and provenance.
+<img src="build/icon.png" alt="Foliuna leaf icon" width="112" height="112">
+
+A booru searcher, offline gallery and personal archive for Windows and Android. Find posts by tag, save originals with their context, and organize your own collections.
+
+[Explore the website and interactive demo](https://JustyPixels.github.io/Foliuna/) · [Downloads](https://github.com/JustyPixels/Foliuna/releases) · [Questions and issues](https://github.com/JustyPixels/Foliuna/issues)
+
+| Platform | Status | Download |
+| --- | --- | --- |
+| Windows 10/11 x64 | Unsigned 0.5.0-rc.1 candidate | [Installer and ZIP](https://github.com/JustyPixels/Foliuna/releases/tag/v0.5.0-rc.1) |
+| Android 8.0+ | 0.1.0-preview.1 testing preview in verification | Forthcoming until the tested APK is published |
+
+Android uses a separate preview app and Android Keystore credentials. Export before uninstalling or changing signing identity: uninstalling removes private archives. Read the [Android installation, privacy and export guide](docs/ANDROID.md). No production signing identity or Google Play submission.
+
+![Windows Discover with fictional demo artwork](docs/screenshots/discover.png)
+
+![Offline Gallery](docs/screenshots/gallery.png)
+
+![Local Collections](docs/screenshots/collections.png)
 
 **Release candidate 0.5.0-rc.1:** Electron + React + TypeScript, multi-provider search/pagination/details with safe-only or all-ratings filtering, encrypted credentials, working thumbnails, sample/full-size image viewing, native archive-folder selection, explicit original downloads, SHA-256 deduplication, source snapshot history, categorized tags in SQLite, portable `.foliuna.json` sidecars, interrupted-save recovery, an offline gallery, named local collections with portable SHA-256 memberships, local search/thumbnail cache, validated sidecar restore, moved/missing-file checks, a local demo and automated tests. New searches run when submitted; optional infinite scrolling then loads one additional page at the end of the list. Built-ins: e621, Danbooru, Gelbooru, Rule34.xxx, Safebooru, AIBooru, Yande.re and Konachan. Custom Danbooru/Gelbooru JSON sites can be added in Settings. Safe-only mode is the default; see [connections and compatibility](docs/BOORUS.md).
 
@@ -39,7 +56,7 @@ Live access is read-only and may be restricted by the provider or local network.
 
 The password field clears immediately on submit and never reloads a saved key. Only transient entry passes through the local UI to main. Main uses Electron's asynchronous safeStorage with Windows DPAPI; username and key are encrypted together in the profile, decrypted briefly for the exact configured HTTPS API. Basic credentials use Authorization headers; Gelbooru/Rule34 require API query parameters added only at dispatch. Keys never enter cache identities, logs, archive metadata, sidecars or CDN media requests. Unreadable entries report as locked; no silent anonymous fallback occurs.
 
-DPAPI protects stored credentials from other Windows accounts, but cannot prevent software running as your Windows user from accessing them. Foliuna itself must briefly decrypt a key to authenticate. Credential persistence is currently Windows-only and fails closed when secure encryption is unavailable; there is no plaintext fallback. Archived artwork and portable metadata are ordinary files, separate from credential storage. See [Electron's security semantics](https://www.electronjs.org/docs/latest/api/safe-storage).
+Windows DPAPI and Android Keystore protect saved entries through their operating system. Foliuna must briefly decrypt a key to authenticate; this cannot protect against a compromised device or software acting with your user/app privileges. Both platforms refuse plaintext credential persistence. Archived artwork and portable metadata are separate ordinary files; Android keeps its originals in app-private storage until you export. See [Electron's security semantics](https://www.electronjs.org/docs/latest/api/safe-storage) and [Android Keystore](https://developer.android.com/privacy-and-security/keystore).
 
 ## Archive originals
 
