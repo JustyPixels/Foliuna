@@ -104,4 +104,3 @@ class Media(private val folder: File, private val transfer: MediaTransfer, priva
         })
     }
 }
-

@@ -28,6 +28,11 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci
+      - uses: android-actions/setup-android@be39fa834029ff78f1a44aa3bb0819b8fc2bd8fd # v4
+        with:
+          cmdline-tools-version: '12266719' # Classic SDK tools 16; matches the emulator action.
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
       - name: Prepare SDK and KVM
         run: |
           chmod +x android/gradlew

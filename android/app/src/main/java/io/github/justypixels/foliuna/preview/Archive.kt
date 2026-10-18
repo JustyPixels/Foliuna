@@ -260,7 +260,7 @@ class Archive(val root: File, private val snapshot: (String, Long) -> Snapshot, 
         val entries = value.getJSONArray("collections"); checkInput(entries.length() <= 500); val ids = HashSet<Long>(); val names = HashSet<String>(); var count = 0
         entries.values().forEach { entry -> val item = obj(entry); checkInput(ids.add(integer(item.opt("id"))) && names.add(collectionName(item.opt("name")).lowercase())); val hashes = item.getJSONArray("assets").values().map { sha(it) }; count += hashes.size; checkInput(hashes.size <= 10000 && hashes.distinct().size == hashes.size) }
         checkInput(count <= 100000 && integer(value.opt("nextId")) > (ids.maxOrNull() ?: 0))
-        val stamp = "${file.lastModified()}:${file.length()}:${db.rows("SELECT count(*) n FROM assets").first().getLong("n")}" 
+        val stamp = "${file.lastModified()}:${file.length()}:${db.rows("SELECT count(*) n FROM assets").first().getLong("n")}"
         if (stamp != collectionStamp) { project(value); collectionStamp = stamp }
         value
     }

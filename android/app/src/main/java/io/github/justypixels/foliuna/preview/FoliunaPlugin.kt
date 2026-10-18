@@ -107,4 +107,3 @@ class FoliunaPlugin : Plugin() {
         }
     }
 }
-
