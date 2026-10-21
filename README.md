@@ -9,9 +9,11 @@ A booru searcher, offline gallery and personal archive for Windows and Android. 
 | Platform | Status | Download |
 | --- | --- | --- |
 | Windows 10/11 x64 | Unsigned 0.5.0-rc.1 candidate | [Installer and ZIP](https://github.com/JustyPixels/Foliuna/releases/tag/v0.5.0-rc.1) |
-| Android 8.0+ | 0.1.0-preview.1 testing preview in verification | Forthcoming until the tested APK is published |
+| Android 8.0+ | Debug-signed 0.1.0-preview.1 testing preview | [APK, checksum and verification](https://github.com/JustyPixels/Foliuna/releases/tag/android-v0.1.0-preview.1) |
 
 Android uses a separate preview app and Android Keystore credentials. Export before uninstalling or changing signing identity: uninstalling removes private archives. Read the [Android installation, privacy and export guide](docs/ANDROID.md). No production signing identity or Google Play submission.
+
+<img src="docs/screenshots/android-discover.png" alt="Foliuna Android preview Discover interface on an owned phone emulator" width="360">
 
 ![Windows Discover with fictional demo artwork](docs/screenshots/discover.png)
 

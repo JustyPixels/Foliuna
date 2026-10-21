@@ -2,6 +2,8 @@
 
 Android 8.0 (API 26) or newer; target API 36. The separate application ID is `io.github.justypixels.foliuna.preview`, version `0.1.0-preview.1`. This is a **debug-signed testing build**, not a production or Google Play release. Windows remains available separately.
 
+[Download 0.1.0-preview.1, its checksum and actual verification notes](https://github.com/JustyPixels/Foliuna/releases/tag/android-v0.1.0-preview.1). Final local API 26 phone and API 36 tablet suites passed 10 tests each; GitHub independently passed both APIs and Windows. The earlier authorized physical-phone checks used temporary fixtures; that phone was unavailable for a final-candidate reinstall.
+
 ## Install and protect your archive
 
 Use only an APK attached to a published [Foliuna GitHub Release](https://github.com/JustyPixels/Foliuna/releases). Verify its SHA-256 against the release's SHA256SUMS.txt. Enable installation permission for the app opening the APK when Android requests it. Device, region and developer-verification rules can impose additional steps; follow [Android's current developer verification guidance](https://developer.android.com/developer-verification/guides). A debug signature does not exempt a build from platform rules.

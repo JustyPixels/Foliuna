@@ -110,7 +110,7 @@ scraping until the search-to-archive loop is validated in everyday use.
 - [x] Explicit SAF snapshot export, exclusion of profile secrets/settings, and actual Windows importer reconstruction of Gallery/Collections.
 - [x] API 26/36 emulator and authorized physical Moto g14 API 34 testing; Windows regressions/packaging retained.
 - [x] README icon/screenshots, responsive fictional interactive website, release-derived download links, pinned Android/Pages workflows.
-- [ ] Publish Android 0.1.0-preview.1 debug APK/checksum/verification notes after final source/CI checks; retain existing Windows release.
-- [ ] Confirm deployed GitHub Pages project-path and real release links.
+- [x] Publish Android 0.1.0-preview.1 debug APK/checksum/verification notes after final source/CI checks; retain existing Windows release.
+- [x] Confirm deployed GitHub Pages project-path and real release links.
 
 The preview uses io.github.justypixels.foliuna.preview and disposable debug signing. Export before uninstalling or changing certificates. No production signing secrets, Play submission, Flash on Android, floating Android windows, background downloads, incoming Android libraries or synchronization. Authenticated live provider access and broad device/storage testing remain unverified.
