@@ -18,6 +18,7 @@ class MainActivity : BridgeActivity() {
         private var instance: Services? = null
         // Set only from native instrumentation, never through intents or the WebView.
         internal var testServices: Services? = null
+        internal var testExportDestination: android.net.Uri? = null
     }
     val services: Services by lazy { testServices ?: instance ?: synchronized(MainActivity::class.java) { instance ?: Services(applicationContext).also { instance = it } } }
     override fun onCreate(state: Bundle?) {

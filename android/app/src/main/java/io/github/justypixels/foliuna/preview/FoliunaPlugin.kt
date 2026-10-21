@@ -83,6 +83,7 @@ class FoliunaPlugin : Plugin() {
         if (call == null) return
         if (result.resultCode != Activity.RESULT_OK || result.data?.data == null) { resolve(call, j("exported" to 0, "cancelled" to true)); return }
         val destination = result.data!!.data!!
+        if (MainActivity.testServices != null) MainActivity.testExportDestination = destination
         run(call) {
             val parent = DocumentFile.fromTreeUri(context, destination) ?: fail("EXPORT", "The selected folder is unavailable.")
             val folder = parent.createDirectory("Foliuna-${Instant.now().toString().replace(':', '-')}-${UUID.randomUUID().toString().take(8)}") ?: fail("EXPORT", "Could not create an export folder.")

@@ -48,6 +48,8 @@ class NativeTest {
                 categories.forEach { assertEquals(expected.getJSONObject("tags").getJSONArray(it).toString(), actual.getJSONObject("tags").getJSONArray(it).toString()) }
             }
             denied { normalized(cases.first().getJSONObject("raw").copy().put("rating", "g"), cases.first().getJSONObject("source")) }
+            listOf("", "two\u00A0tags", "two\u2028tags", "two\uFEFFtags").forEach { assertFalse(validTag(it)) }
+            denied { normalized(cases.first().getJSONObject("raw").copy().put("tags", j("artist" to "bad_array")), cases.first().getJSONObject("source")) }
             state.archive.close()
         } finally { root.deleteRecursively() }
     }
@@ -167,7 +169,10 @@ class NativeTest {
             assertEquals(1, restarted.archive.status().getInt("assets")); assertFalse(part.exists())
             restarted.archive.recover()
             assertEquals(1, restarted.archive.sidecar(hash(png)).getJSONArray("sources").getJSONObject(0).getJSONArray("snapshots").length())
-            assertTrue(restarted.archive.db.rows("SELECT * FROM download_journal").isEmpty()); restarted.archive.close()
+            assertTrue(restarted.archive.db.rows("SELECT * FROM download_journal").isEmpty())
+            val linkedCache = File(root, "linked-cache"); android.system.Os.symlink(File(restarted.archive.root, "media").path, linkedCache.path)
+            try { denied { Media(linkedCache, transfer, restarted.archive) }; assertArrayEquals(png, restarted.archive.original(hash(png)).readBytes()) } finally { linkedCache.delete() }
+            restarted.archive.close()
         } finally { root.deleteRecursively() }
     }
 }

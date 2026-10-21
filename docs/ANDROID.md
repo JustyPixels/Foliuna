@@ -48,6 +48,8 @@ npm run android:lint
 
 Build writes a debug APK and checksum into ignored **release/android/**. Tests require an owned API 26 or API 36 emulator; set **ANDROID_SERIAL** to its serial. Generated provider definitions and compatibility fixtures come from the same TypeScript sources used by Windows. Test fixtures are packaged only in the instrumentation APK.
 
+Gradle connected tests can uninstall the target app afterward. Do not run them against a personal phone. Authorized physical-device checks use `adb install -r` and manual instrumentation with temporary fixture services, preserving the installed preview and private archive.
+
 Android tests cover provider normalization, custom identities, encrypted credentials and API separation, public-address/hostname checks, rate limiting/cache/cooldowns, media validation/cancellation, SHA-256 deduplication, recovery, offline searches, membership/restart, actual WebView bridge restrictions, navigation/layout and real SAF destination creation. Exact exported names and MIME types are checked; both private-snapshot and picker-produced fixtures are checked with the unchanged Windows importer:
 
 ```powershell

@@ -55,6 +55,7 @@ fun readJson(file: File, max: Long = 16 * 1024 * 1024): JSONObject {
 }
 
 val categories = listOf("artist", "copyright", "character", "species", "general", "meta", "lore", "invalid")
+fun validTag(value: Any?): Boolean = value is String && value.length in 1..200 && value.none { it.isWhitespace() || it == '\uFEFF' || it.code < 32 || it.code == 127 }
 val providerPattern = Regex("(?:e621|e926|danbooru|gelbooru|rule34|safebooru|aibooru|yandere|konachan|custom-[a-f0-9]{32})")
 val shaPattern = Regex("[a-f0-9]{64}")
 fun provider(value: Any?): String { checkInput(value is String && providerPattern.matches(value), "Choose a configured booru."); return value as String }
@@ -164,7 +165,7 @@ class Credentials(private val folder: File, private val providers: Providers) {
 fun preference(input: JSONObject): JSONObject {
     val tags = input.optJSONArray("favoriteTags") ?: fail("INVALID_INPUT", "Invalid favorite tags.")
     checkInput(input.text("gridMode") in listOf("crop", "natural") && input.text("browsing") in listOf("pages", "infinite") && tags.length() <= 500)
-    checkInput(tags.values().all { it is String && it.isNotEmpty() && it.length <= 200 && !Regex("[\\s\\x00-\\x1f\\x7f]").containsMatchIn(it) })
+    checkInput(tags.values().all { validTag(it) })
     return j("gridMode" to input.text("gridMode"), "browsing" to input.text("browsing"), "favoriteTags" to a(tags.values().distinct()))
 }
 fun collectionName(value: Any?): String {

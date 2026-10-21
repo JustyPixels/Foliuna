@@ -19,7 +19,7 @@ class Media(private val folder: File, private val transfer: MediaTransfer, priva
     private val flights = ConcurrentHashMap<String, FutureTask<File>>()
     private val cancelled = AtomicBoolean()
     private val cache = LinkedHashMap<String, File>(16, .75f, true)
-    init { folder.mkdirs(); folder.listFiles()?.forEach { it.delete() } }
+    init { folder.mkdirs(); checkInput(folder.isDirectory && folder.canonicalFile == folder.absoluteFile, "Unsafe media cache folder."); folder.listFiles()?.forEach { it.delete() } }
     fun pause() { cancelled.set(true) }
     fun resume() { cancelled.set(false) }
     @Synchronized fun register(post: JSONObject): JSONObject {

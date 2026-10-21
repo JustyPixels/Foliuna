@@ -186,14 +186,16 @@ fun normalized(raw: JSONObject, source: JSONObject): Snapshot {
         "g", "general", "safe" -> "s"; source.text("safeRating") -> "s"; "s", "sensitive", "q", "questionable" -> "q"; "e", "explicit" -> "e"; else -> fail("INVALID_RESPONSE", "The site returned an unknown rating.")
     }
     val tags = JSONObject()
+    if (native && raw.opt("tags") !is JSONObject) fail("INVALID_RESPONSE", "The site returned invalid tags.")
     categories.forEach { category ->
+        if (native && raw.getJSONObject("tags").has(category) && raw.getJSONObject("tags").opt(category) !is JSONArray) fail("INVALID_RESPONSE", "The site returned invalid tags.")
         val value = if (native) raw.optJSONObject("tags")?.optJSONArray(category)?.values() ?: emptyList() else raw.text("tag_string_$category").split(Regex("\\s+")).filter { it.isNotEmpty() }
-        if (value.size > 10000 || value.any { it !is String || it.isEmpty() || it.length > 200 || Regex("[\\s\\x00-\\x1f\\x7f]").containsMatchIn(it) }) fail("INVALID_RESPONSE", "The site returned invalid tags.")
+        if (value.size > 10000 || value.any { !validTag(it) }) fail("INVALID_RESPONSE", "The site returned invalid tags.")
         tags.put(category, a(if (native || engine == "danbooru") value.distinct() else emptyList<Any>()))
     }
     if (!native) {
         val all = (if (raw.has("tag_string")) raw.text("tag_string") else raw.text("tags")).split(Regex("\\s+")).filter { it.isNotEmpty() }
-        checkInput(all.size <= 10000 && all.all { it.length <= 200 })
+        checkInput(all.size <= 10000 && all.all { validTag(it) })
         val seen = categories.flatMap { tags.getJSONArray(it).values() }.toSet(); tags.put("general", a(tags.getJSONArray("general").values() + all.filter { it !in seen }.distinct()))
     }
     fun resolve(value: Any?): String? {

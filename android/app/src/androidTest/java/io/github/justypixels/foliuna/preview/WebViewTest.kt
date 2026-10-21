@@ -37,7 +37,7 @@ class WebViewTest {
         waitFor("window.__answer!==null")
         return JSONObject(org.json.JSONTokener(js("window.__answer")).nextValue().toString())
     }
-    private fun click(label: String) { js("var b=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===$label||b.getAttribute('aria-label')===$label);if(b)b.click()") }
+    private fun click(label: String) { assertEquals("true", js("(function(){var b=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===$label||b.getAttribute('aria-label')===$label||(b.matches('.nav-item')&&b.textContent.trim().endsWith($label)));if(!b||b.disabled)return false;b.click();return true})()")) }
     private fun screenshot(name: String) {
         val file = File(context.cacheDir, "$name.png")
         assertTrue(UiDevice.getInstance(instrumentation).takeScreenshot(file))
@@ -64,14 +64,14 @@ class WebViewTest {
                 HttpResult(200, mapOf("content-type" to "application/json"), ByteArrayInputStream(j((if (detail) "post" else "posts") to if (detail) post else a(listOf(post))).toString().toByteArray())) {}
             }
         }, 0)
-        MainActivity.testServices = state
+        MainActivity.testServices = state; MainActivity.testExportDestination = null
         try {
             ActivityScenario.launch(MainActivity::class.java).use { scenario ->
                 scenario.onActivity { web = it.bridge.webView }
                 waitFor("!!window.foliuna && document.querySelectorAll('.nav-item').length===3 && !document.body.innerText.includes('Opening library')")
                 action(scenario)
             }
-        } finally { if (emulated) UiDevice.getInstance(instrumentation).unfreezeRotation(); state.archive.close(); MainActivity.testServices = null; root.deleteRecursively() }
+        } finally { if (emulated) UiDevice.getInstance(instrumentation).unfreezeRotation(); state.archive.close(); MainActivity.testServices = null; MainActivity.testExportDestination = null; root.deleteRecursively() }
     }
     @Test fun bridgeIsolationAndRealUiJourney() = run {
         assertEquals("android", promise("window.foliuna.platform()").getJSONObject("value").text("name"))
@@ -92,14 +92,16 @@ class WebViewTest {
         click("'Download original'")
         waitFor("document.body.innerText.includes('Archived')||document.body.innerText.includes('Saved')||document.body.innerText.includes('already')")
         click("'Close post details'"); click("'Gallery'")
-        waitFor("document.querySelectorAll('.post-card').length===1")
+        waitFor("document.querySelector('.intro h1').innerText.startsWith('Gallery') && document.querySelectorAll('.post-card').length===1 && !document.body.innerText.includes('Searching the selected source')")
         assertFalse(js("document.body.innerText").contains("Import sidecars"))
         click("'Settings'"); waitFor("(document.querySelector('dialog[open]')||{innerText:''}).innerText.includes('Export library')")
         assertFalse(js("document.querySelector('dialog[open]').innerText").contains("Choose archive folder"))
+        assertTrue(js("document.querySelector('dialog[open]').innerText").contains("Android Keystore"))
         click("'Export library…'")
         val device = UiDevice.getInstance(instrumentation)
         assertTrue(device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg("com.google.android.documentsui")), 10000) || device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg("com.android.documentsui")), 10000))
-        device.pressBack()
+        // Older DocumentsUI navigates through folders before returning cancellation.
+        repeat(6) { if (device.currentPackageName != context.packageName) { device.pressBack(); device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg(context.packageName)), 1000) } }
         waitFor("document.body.innerText.includes('Export cancelled')")
         UiDevice.getInstance(instrumentation).pressBack()
         waitFor("!document.querySelector('dialog[open]')")
@@ -165,7 +167,7 @@ class WebViewTest {
                 text("(?i)USE THIS FOLDER|SELECT").click()
                 device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(java.util.regex.Pattern.compile("(?i)ALLOW"))), 3000)?.click()
                 waitFor("document.body.innerText.includes('Export complete')")
-                val uri = android.provider.DocumentsContract.buildTreeDocumentUri("com.android.externalstorage.documents", "primary:Download/$folderName")
+                val uri = MainActivity.testExportDestination ?: throw AssertionError("No native destination result")
                 val parent = androidx.documentfile.provider.DocumentFile.fromTreeUri(context, uri)!!
                 val folder = parent.listFiles().single { it.isDirectory }
                 assertNull(folder.findFile("EXPORT-INCOMPLETE.txt"))
