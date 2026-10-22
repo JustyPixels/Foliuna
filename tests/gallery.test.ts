@@ -71,7 +71,7 @@ describe('offline index and query grammar', () => {
     library = new ArchiveLibrary(profile, {}); await library.select(root); gallery = new Gallery(library);
     expect(library.status().assets).toBe(0); await gallery.importSidecars(); expect(library.status().assets).toBe(26);
     expect((await gallery.search(query('', true, 2))).posts).toHaveLength(2);
-  });
+  }, 30000); // Durable copies and a 26-asset rebuild can exceed ten seconds on hosted Windows.
   it('rejects unsupported operators and malformed input before SQL runs', () => {
     for (const tags of ['limit:100', '~forest', 'forest*', 'rating:x', 'artist:', 'id:-1', 'provider:evil']) expect(() => galleryFilter(galleryRequest(query(tags, false)))).toThrow();
     for (const input of [null, {}, { tags: '', page: 0 }, { tags: 'a\nb', page: 1 }, { tags: '', page: 1, safeOnly: 'yes' }]) expect(() => galleryRequest(input)).toThrow();

@@ -197,5 +197,5 @@ describe('portable multi-booru archives', () => {
       await handlers[CHANNELS.openPost]({ provider: definition.id, id: 42, archiveSha: result.sha256 });
       expect(openExternal).toHaveBeenCalledWith('https://custom.booru.org/posts/42');
     } finally { await library.close(); await rm(profile, { recursive: true, force: true }); }
-  });
+  }, 30000); // This integration flow performs durable downloads, migration and a complete reimport.
 });
