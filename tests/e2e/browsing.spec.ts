@@ -74,7 +74,9 @@ test('media: actual video/GIF decoding, isolated Ruffle playback, resizable/full
     await page.getByRole('button', { name: 'Pause video', exact: true }).click();
     await page.getByRole('button', { name: 'Mute video', exact: true }).click();
     await page.getByLabel('Playback speed').selectOption('0.5');
-    await page.getByLabel('Video position').fill('0.1');
+    await page.getByLabel('Video position').focus();
+    await page.keyboard.press('Home'); await page.keyboard.press('ArrowRight');
+    await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBeCloseTo(0.1, 2);
     await page.getByRole('button', { name: 'Fullscreen video', exact: true }).click();
     const fullscreenVideo = page.getByRole('dialog', { name: 'Fullscreen media' }).locator('video');
     await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(true);
