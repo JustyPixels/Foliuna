@@ -8,7 +8,7 @@
 - [x] e621/e926 adapters, descriptive User-Agent, paced serial queue, timeout/body bound and provider cooldown handling.
 - [x] Tag searches, source choice, numbered pagination, categorized post details, plain-text descriptions and canonical source opening.
 - [x] Non-destructive versioned SQLite schema for assets, sources, categorized tags and collections.
-- [x] Explicit offline demo; unit/component/database/IPC tests and actual Electron desktop verification.
+- [x] Unit/component/database/IPC tests and actual Electron desktop verification. The former offline demo was removed at user request.
 - [x] Development instructions, append-only log, README and architecture/roadmap docs.
 
 Consult LOG.md for actual verification outcomes. Checkmarks describe implementation, not a public release guarantee.
@@ -88,7 +88,7 @@ See BOORUS.md and LOG.md for API sources, compatibility and actual verification.
 
 - [x] Shorter UI copy and compact shared controls; preserve actionable errors and security guidance.
 - [x] Linear result deduplication, one-pass columns, memoized cards and retained lazy thumbnails.
-- [x] Clean-staged x64 NSIS installer and ZIP, leaf icon, licenses and explicit offline demo.
+- [x] Clean-staged x64 NSIS installer and ZIP, leaf icon and licenses.
 - [x] Hardened Electron fuses, embedded ASAR integrity, file/block verification and SHA-256 manifests.
 - [x] Maintainer JustyPixels, GitHub-only releases/contact and descriptive API identification.
 - [x] Dependency advisory review, backup/update/uninstall/migration documentation and pinned Windows CI.
@@ -109,8 +109,13 @@ scraping until the search-to-archive loop is validated in everyday use.
 - [x] Mobile tabs/touch grids, details navigation, sample/full-size, GIF/video, fullscreen return, Back and rotation.
 - [x] Explicit SAF snapshot export, exclusion of profile secrets/settings, and actual Windows importer reconstruction of Gallery/Collections.
 - [x] API 26/36 emulator and authorized physical Moto g14 API 34 testing; Windows regressions/packaging retained.
-- [x] README icon/screenshots, responsive fictional interactive website, release-derived download links, pinned Android/Pages workflows.
+- [x] README icon/screenshots, responsive showcase with real safe tag-search artwork, release-derived download links, pinned Android/Pages workflows.
 - [x] Publish Android 0.1.0-preview.1 debug APK/checksum/verification notes after final source/CI checks; retain existing Windows release.
 - [x] Confirm deployed GitHub Pages project-path and real release links.
 
 The preview uses io.github.justypixels.foliuna.preview and disposable debug signing. Export before uninstalling or changing certificates. No production signing secrets, Play submission, Flash on Android, floating Android windows, background downloads, incoming Android libraries or synchronization. Authenticated live provider access and broad device/storage testing remain unverified.
+
+## Viewing and presentation polish
+
+- [x] Full-page details, true system fullscreen, keyboard/swipe navigation, custom video controls and a Windows title bar.
+- [x] Real safe e621 forest search screenshots, credited artwork rotation, scroll motion and reduced-motion/pause controls; user-facing demo removed.

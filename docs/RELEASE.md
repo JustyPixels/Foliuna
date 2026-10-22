@@ -74,9 +74,9 @@ it has read-only repository permissions and does not publish releases.
 `verify-package.mjs` checks the actual executable fuses, embedded ASAR header
 hash, every packaged file/block hash and allowed file paths, then generates
 `package-verification.json` and `SHA256SUMS.txt`. Packaged smoke checks use
-only explicitly requested loopback browser debugging and a temporary demo
+only explicitly requested loopback browser debugging and a temporary offline sidecar-fixture
 profile. They do not enable the disabled Node inspector or modify production
-fuses. `--demo` is also available to users; `--user-data-dir=<absolute-path>`
+fuses. `--user-data-dir=<absolute-path>`
 selects a separate profile for troubleshooting. Normal launch enables neither.
 
 The original leaf icon is committed. `npm run icon` regenerates its PNG/ICO

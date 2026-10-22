@@ -4,7 +4,7 @@
 
 A booru searcher, offline gallery and personal archive for Windows and Android. Find posts by tag, save originals with their context, and organize your own collections.
 
-[Explore the website and interactive demo](https://JustyPixels.github.io/Foliuna/) · [Downloads](https://github.com/JustyPixels/Foliuna/releases) · [Questions and issues](https://github.com/JustyPixels/Foliuna/issues)
+[Explore the website](https://JustyPixels.github.io/Foliuna/) · [Downloads](https://github.com/JustyPixels/Foliuna/releases) · [Questions and issues](https://github.com/JustyPixels/Foliuna/issues)
 
 | Platform | Status | Download |
 | --- | --- | --- |
@@ -13,15 +13,19 @@ A booru searcher, offline gallery and personal archive for Windows and Android. 
 
 Android uses a separate preview app and Android Keystore credentials. Export before uninstalling or changing signing identity: uninstalling removes private archives. Read the [Android installation, privacy and export guide](docs/ANDROID.md). No production signing identity or Google Play submission.
 
-<img src="docs/screenshots/android-discover.png" alt="Foliuna Android preview Discover interface on an owned phone emulator" width="360">
+<img src="docs/screenshots/android-discover.png" alt="Actual Android safe forest landscape search" width="360">
 
-![Windows Discover with fictional demo artwork](docs/screenshots/discover.png)
+![Actual Windows e621 search for forest landscape](docs/screenshots/discover.png)
 
 ![Offline Gallery](docs/screenshots/gallery.png)
 
 ![Local Collections](docs/screenshots/collections.png)
 
-**Release candidate 0.5.0-rc.1:** Electron + React + TypeScript, multi-provider search/pagination/details with safe-only or all-ratings filtering, encrypted credentials, working thumbnails, sample/full-size image viewing, native archive-folder selection, explicit original downloads, SHA-256 deduplication, source snapshot history, categorized tags in SQLite, portable `.foliuna.json` sidecars, interrupted-save recovery, an offline gallery, named local collections with portable SHA-256 memberships, local search/thumbnail cache, validated sidecar restore, moved/missing-file checks, a local demo and automated tests. New searches run when submitted; optional infinite scrolling then loads one additional page at the end of the list. Built-ins: e621, Danbooru, Gelbooru, Rule34.xxx, Safebooru, AIBooru, Yande.re and Konachan. Custom Danbooru/Gelbooru JSON sites can be added in Settings. Safe-only mode is the default; see [connections and compatibility](docs/BOORUS.md).
+These are actual safe-only `forest landscape` search results and a separate presentation archive. [Artist credits, source links and the exact query](docs/screenshots/README.md). The artwork remains copyrighted by its artists; no endorsement or reuse license is asserted.
+
+Current source adds full-page post details, real system fullscreen, keyboard/swipe navigation, a custom video player and a Windows title bar. The website shows search artwork with artist credits, five-second rotation and scroll animation.
+
+**Release candidate 0.5.0-rc.1:** Electron + React + TypeScript, multi-provider search/pagination/details with safe-only or all-ratings filtering, encrypted credentials, working thumbnails, sample/full-size image viewing, native archive-folder selection, explicit original downloads, SHA-256 deduplication, source snapshot history, categorized tags in SQLite, portable `.foliuna.json` sidecars, interrupted-save recovery, an offline gallery, named local collections with portable SHA-256 memberships, local search/thumbnail cache, validated sidecar restore, moved/missing-file checks and automated tests. New searches run when submitted; optional infinite scrolling then loads one additional page at the end of the list. Built-ins: e621, Danbooru, Gelbooru, Rule34.xxx, Safebooru, AIBooru, Yande.re and Konachan. Custom Danbooru/Gelbooru JSON sites can be added in Settings. Safe-only mode is the default; see [connections and compatibility](docs/BOORUS.md).
 
 **Windows downloads:** [GitHub Releases](https://github.com/JustyPixels/Foliuna/releases). Install the Setup executable, or extract the complete ZIP and open `Foliuna.exe`. This candidate is unsigned. See the [installation, backup and release guide](docs/RELEASE.md). Gallery and Collections work offline; browsing online previews still does not archive anything. See [the Collections guide](docs/COLLECTIONS.md) for creation, membership, safe deletion and portable recovery.
 
@@ -38,13 +42,7 @@ npm start
 
 `npm run build` only creates the app files; it does not open a window. To open an already-built app without rebuilding, run `node .\scripts\launch.mjs` from this directory. Keep the terminal open while using the app.
 
-For a completely offline demonstration after installing dependencies:
-
-```powershell
-npm run demo
-```
-
-The demo has 30 fictional safe-rated posts, three original local SVG illustrations, two pages, and working tag filters/details. Try `forest`, `fox`, `wolf`, `deer`, or `fox -wolf`. Demo filtering supports exact tags, exclusions, `rating:s`, and `order:id_desc`; other booru operators work only in live mode. Demo never silently replaces a failed live request. Its IDs are fictional, so source opening, connection testing and original downloads are disabled. Encrypted credential saving/removal and folder selection can still be exercised in its separate profile.
+Gallery and Collections remain usable offline after you save media. The former fictional demo mode has been removed.
 
 Live access is read-only and may be restricted by the provider or local network. Rule34 requires a user API key and numeric ID; Gelbooru may require them. Other built-ins support anonymous reads. A 403 does not prove a key is required, and a key cannot bypass a site or network restriction. Source post links open in the default browser on an explicit click; arbitrary source strings remain plain text. Chromium may cache viewed images in its application profile. Retired e926 archive provenance and encrypted credential files are preserved, but no live API calls are made to e926 and its old key is not automatically reused for e621.
 
@@ -129,7 +127,7 @@ Thumbnails are disposable derived PNG files under the selected library’s `.fol
 
 Profiles hold Chromium data, `preferences.json` (browsing mode, grid mode and local favorite tags), `library.json` with the selected folder, and per-provider `*.credentials.enc` files. Actual archive databases are under the selected library folder. A phase-1 profile database is left untouched; it is not silently moved or imported. Selected archive databases migrate non-destructively to schema version 3, and newer unknown schemas are refused.
 
-Development and desktop tests can set `FOLIUNA_DATA_DIR` to isolate the profile. Packaged apps ignore these environment overrides; use explicit `--demo` and `--user-data-dir=<absolute-path>` launch arguments for an isolated demonstration. A library lock prevents concurrent writers across profiles; a stale lock from a stopped process can be reclaimed. Back up the entire selected library together, rather than copying only its database while the app is writing.
+Development and desktop tests can set `FOLIUNA_DATA_DIR` to isolate the profile. Packaged apps ignore these environment overrides; use `--user-data-dir=<absolute-path>` for an isolated profile. A library lock prevents concurrent writers across profiles; a stale lock from a stopped process can be reclaimed. Back up the entire selected library together, rather than copying only its database while the app is writing.
 
 ## Verify
 
@@ -140,7 +138,7 @@ npm run test:e2e # build and exercise the actual Electron desktop app
 npm run check    # unit/component tests, build, then desktop test
 ```
 
-Archive tests stream bytes from a real local fixture HTTP server. They cover deduplication, source/tag/snapshot preservation, size/signature/checksum errors, cancellation, HTTP/redirect failures, recovery, locks and no-overwrite behavior. Credential/media tests cover validation, scoped headers, encrypted persistence, sanitized status and the bounded image route. Desktop tests additionally decode generated GIF/VP8 video fixtures, load/play a generated SWF in Ruffle, check cross-origin isolation, exercise fullscreen/resizing, persisted browsing preferences, autocomplete, tag actions and infinite scrolling. They also exercise actual Windows encryption, restart persistence/removal, folder selection, dialog focus, search, sandboxing, CSP, blocked navigation/popups and portrait/landscape sample/full-size image decoding and proportions. Credential desktop tracing is disabled. No separate browser download is needed. Screenshots are refreshed in `docs/screenshots/`. The offline desktop fixture rejects every API/CDN fetch and verifies gallery images, video, GIF/Flash, local suggestions, thumbnail persistence, restore/reconciliation and restart with zero attempts. Default tests never call the providers; opt-in live image verification is recorded in LOG.md.
+Archive tests stream bytes from a real local fixture HTTP server. They cover deduplication, source/tag/snapshot preservation, size/signature/checksum errors, cancellation, HTTP/redirect failures, recovery, locks and no-overwrite behavior. Credential/media tests cover validation, scoped headers, encrypted persistence, sanitized status and the bounded image route. Desktop tests additionally decode generated GIF/VP8 video fixtures, load/play a generated SWF in Ruffle, check cross-origin isolation, exercise fullscreen/resizing, persisted browsing preferences, autocomplete, tag actions and infinite scrolling. They also exercise actual Windows encryption, restart persistence/removal, folder selection, dialog focus, search, sandboxing, CSP, blocked navigation/popups and portrait/landscape sample/full-size image decoding and proportions. Credential desktop tracing is disabled. No separate browser download is needed. Fixture screenshots stay in ignored `test-results/`. Public screenshots in `docs/screenshots/` are captured separately using real safe searches. The offline desktop fixture rejects every API/CDN fetch and verifies gallery images, video, GIF/Flash, local suggestions, thumbnail persistence, restore/reconciliation and restart with zero attempts. Default tests never call the providers; opt-in live image verification is recorded in LOG.md.
 
 Use [LOG.md](LOG.md) for actual verification results and limitations, [architecture](docs/ARCHITECTURE.md) for trust boundaries and the storage plan, [roadmap](docs/ROADMAP.md) for the next increments, and [AGENTS.md](AGENTS.md) for contributor instructions.
 
