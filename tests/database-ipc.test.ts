@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { openLibrary } from '../src/main/database';
 import { actions, respond } from '../src/main/ipc';
 import { APP_URL } from '../src/main/security';
-import { DemoAdapter } from '../src/main/adapters/demo';
+import { DemoAdapter } from './fixtures/posts';
 import { CHANNELS } from '../src/shared/contracts';
 import { AppError } from '../src/shared/validation';
 import { ArchiveLibrary } from '../src/main/archive/library';
@@ -104,7 +104,7 @@ describe('IPC capability routing', () => {
   it('routes credential save/test/remove through main without returning the key', async () => {
     const profile = mkdtempSync(join(tmpdir(), 'foliuna-account-ipc-'));
     const adapters = { e621: new DemoAdapter('e621'), e926: new DemoAdapter('e926') };
-    const library = new ArchiveLibrary(profile, adapters, false);
+    const library = new ArchiveLibrary(profile, adapters);
     const opaque = new Map<string, string>();
     const credentials = new CredentialStore(profile, {
       available: async () => true,
@@ -112,8 +112,7 @@ describe('IPC capability routing', () => {
       decrypt: async (buffer) => opaque.get(buffer.toString())!,
     });
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response('{"posts":[]}', { headers: { 'content-type': 'application/json' } }));
-    const services = { adapters, library, credentials, demo: false,
-      client: new ApiClient(fetcher, (site) => credentials.read(site)), openExternal: async () => undefined, selectDirectory: async () => null };
+    const services = { adapters, library, credentials, client: new ApiClient(fetcher, (site) => credentials.read(site)), openExternal: async () => undefined, selectDirectory: async () => null };
     const handlers = actions(services);
     try {
       await expect(handlers[CHANNELS.testConnection]('e621')).rejects.toMatchObject({ code: 'CREDENTIALS_REQUIRED' });
@@ -127,27 +126,24 @@ describe('IPC capability routing', () => {
       expect(new Headers(call[1]!.headers).get('authorization')).toBe(`Basic ${Buffer.from(`${input.username}:${input.apiKey}`).toString('base64')}`);
       await handlers[CHANNELS.removeCredentials]('e621');
       expect((await handlers[CHANNELS.getSettings]()).credentials.find((entry) => entry.provider === 'e621')!.saved).toBe(false);
-      await expect(actions({ ...services, demo: true })[CHANNELS.testConnection]('e621')).rejects.toMatchObject({ code: 'DEMO' });
       await expect(handlers[CHANNELS.removeCredentials]('evil')).rejects.toThrow();
     } finally { await library.close(); rmSync(profile, { recursive: true, force: true }); }
   });
   it('routes validated identities and reads the real library count', async () => {
     const profile = mkdtempSync(join(tmpdir(), 'foliuna-ipc-'));
     const adapters = { e621: new DemoAdapter('e621'), e926: new DemoAdapter('e926') };
-    const library = new ArchiveLibrary(profile, adapters, false);
+    const library = new ArchiveLibrary(profile, adapters);
     try {
       const open = vi.fn().mockResolvedValue(undefined);
-      const services = { adapters, library, demo: false, openExternal: open, selectDirectory: async () => null,
+      const services = { adapters, library, openExternal: open, selectDirectory: async () => null,
         credentials: new CredentialStore(profile, { available: async () => false, encrypt: async () => Buffer.alloc(0), decrypt: async () => '' }), client: new ApiClient() };
       const handlers = actions(services);
-      expect(await handlers[CHANNELS.libraryStatus]()).toEqual({ assets: 0, schemaVersion: 3, demo: false, root: null, issue: null });
+      expect(await handlers[CHANNELS.libraryStatus]()).toEqual({ assets: 0, schemaVersion: 3, root: null, issue: null });
       expect((await handlers[CHANNELS.search]({ provider: 'e926', tags: 'fox', page: 1 })).posts).toHaveLength(10);
       expect((await handlers[CHANNELS.getPost]({ provider: 'e621', id: 1001 })).provider).toBe('e621');
       await handlers[CHANNELS.openPost]({ provider: 'e621', id: 123, url: 'file:///malicious' });
       expect(open).toHaveBeenCalledWith('https://e621.net/posts/123');
       await expect(handlers[CHANNELS.search]({ provider: 'e926', tags: '', page: -1 })).rejects.toThrow();
-      const demoHandlers = actions({ ...services, demo: true });
-      await expect(demoHandlers[CHANNELS.openPost]({ provider: 'e621', id: 123 })).rejects.toMatchObject({ code: 'DEMO' });
       expect(open).toHaveBeenCalledTimes(1);
       const e621Only = actions({ ...services, adapters: { e621: adapters.e621 } });
       await expect(e621Only[CHANNELS.search]({ provider: 'e926', tags: '', page: 1 })).rejects.toMatchObject({ code: 'INVALID_INPUT' });

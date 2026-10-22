@@ -12,7 +12,7 @@ export function AccountDialog({ preferences, onClose, onSearch, onRemove }: { pr
       .catch(() => { if (active) setError('Account details could not load.'); });
     return () => { active = false; };
   }, []);
-  return <dialog ref={ref} className="details-dialog settings-dialog" aria-labelledby="account-title" onCancel={(event) => { event.preventDefault(); onClose(); }}><div className="details-content">
+  return <dialog ref={ref} className="settings-dialog" aria-labelledby="account-title" onCancel={(event) => { event.preventDefault(); onClose(); }}><div className="details-content">
     <header><h2 id="account-title">Account & favorites</h2><button className="close-button" aria-label="Close account" onClick={onClose}>×</button></header>
     <p className="settings-help">Site account details currently use e621. Other boorus support search and downloads; Foliuna favorite tags below work with your selected source.</p>
     {!account && !error && <p role="status">Loading e621 account…</p>}{error && <p role="alert" className="error-message">{error}</p>}

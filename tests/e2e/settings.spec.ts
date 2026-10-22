@@ -9,7 +9,7 @@ test('Windows DPAPI credentials: save, write-only status, restart persistence, r
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-settings-'));
   const root = join(profile, 'archive'); mkdirSync(root);
   const canonicalRoot = realpathSync.native(root);
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DEMO: '1', FOLIUNA_DATA_DIR: profile };
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile };
   delete env.ELECTRON_RUN_AS_NODE;
   let app = await electron.launch({ args: ['.'], env });
   try {
@@ -21,7 +21,7 @@ test('Windows DPAPI credentials: save, write-only status, restart persistence, r
     await page.getByRole('button', { name: 'Save credentials' }).click();
     await expect(page.getByText(/Credentials encrypted and saved/)).toBeVisible();
     await expect(page.getByLabel('API key')).toHaveValue('');
-    await expect(page.getByRole('button', { name: 'Test connection' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Test connection' })).toBeEnabled();
     for (const provider of ['e621']) {
       const disk = readFileSync(join(profile, `${provider}.credentials.enc`));
       expect(disk.includes(Buffer.from(`FICTIONAL_${provider.toUpperCase()}_TEST_KEY`))).toBe(false);
@@ -36,7 +36,7 @@ test('Windows DPAPI credentials: save, write-only status, restart persistence, r
     await page.getByRole('button', { name: 'Choose archive folder' }).click();
     await expect(page.getByText(canonicalRoot, { exact: true })).toBeVisible();
     expect(existsSync(join(root, '.foliuna', 'library.sqlite'))).toBe(true);
-    await page.screenshot({ path: 'docs/screenshots/settings.png' });
+    await page.screenshot({ path: 'test-results/screenshots/settings.png' });
     await app.close();
     app = await electron.launch({ args: ['.'], env }); page = await app.firstWindow();
     await page.getByRole('button', { name: 'Settings' }).click();

@@ -25,11 +25,12 @@ export async function respond<T>(sender: SenderIdentity, action: () => T | Promi
 }
 
 export interface Services {
+  setFullscreen?(enabled: boolean): void;
+  windowAction?(action: 'minimize' | 'maximize' | 'close'): void;
   adapters: Partial<Record<Provider, BooruAdapter>>;
   library: ArchiveLibrary;
   credentials: CredentialStore;
   client: ApiClient;
-  demo: boolean;
   openExternal(url: string): Promise<unknown>;
   selectDirectory(): Promise<string | null>;
   media?: PostMedia;
@@ -39,12 +40,22 @@ export interface Services {
   refreshProviders?(): void;
 }
 
-export function actions({ adapters, library, credentials, client, demo, openExternal, selectDirectory, media = new PostMedia(), preferences, openViewer, providers, refreshProviders }: Services) {
+export function actions({ adapters, library, credentials, client, openExternal, selectDirectory, media = new PostMedia(), preferences, openViewer, providers, refreshProviders, setFullscreen, windowAction }: Services) {
   const gallery = new Gallery(library);
   const collections = new Collections(library);
   const definitions = () => providers?.list() ?? BUILTIN_PROVIDERS;
   const definition = (id: string) => providers ? providers.get(id) : definitionFor(id);
   return {
+    [CHANNELS.setFullscreen]: (input: unknown) => {
+      if (typeof input !== 'boolean') throw new AppError('INVALID_INPUT', 'Invalid fullscreen state.');
+      if (!setFullscreen) throw new AppError('UNAVAILABLE', 'Fullscreen is unavailable.');
+      setFullscreen(input); return null;
+    },
+    [CHANNELS.windowAction]: (input: unknown) => {
+      if (!['minimize', 'maximize', 'close'].includes(String(input)) || typeof input !== 'string') throw new AppError('INVALID_INPUT', 'Invalid window action.');
+      if (!windowAction) throw new AppError('UNAVAILABLE', 'Window controls are unavailable.');
+      windowAction(input as 'minimize' | 'maximize' | 'close'); return null;
+    },
     [CHANNELS.platform]: () => WINDOWS_CAPABILITIES,
     [CHANNELS.exportLibrary]: () => { throw new AppError('UNSUPPORTED', 'On Windows, back up the complete archive folder.'); },
     [CHANNELS.search]: async (input: unknown) => {
@@ -63,7 +74,6 @@ export function actions({ adapters, library, credentials, client, demo, openExte
     [CHANNELS.libraryStatus]: () => library.status(),
     [CHANNELS.openPost]: async (input: unknown) => {
       const request = postRequest(input);
-      if (demo) throw new AppError('DEMO', 'Demo IDs are fictional. Switch to live mode to open source posts.');
       const archived = record(input).archiveSha;
       const source = archived === undefined ? definition(request.provider) : (await gallery.getPost(sha256(archived), request)).source;
       await openExternal(postUrl(request, source));
@@ -89,7 +99,6 @@ export function actions({ adapters, library, credentials, client, demo, openExte
     [CHANNELS.testConnection]: async (input: unknown) => {
       const site = provider(input);
       if (site === 'e926' || !adapters[site]) throw new AppError('INVALID_INPUT', 'Choose a configured live booru.');
-      if (demo) throw new AppError('DEMO', 'Connection tests are disabled in the offline demo.');
       const source = definition(site);
       if (site === 'e621' && !await credentials.read(site)) throw new AppError('CREDENTIALS_REQUIRED', 'Save your username and API key for this provider first.');
       const url = new URL(source.engine === 'gelbooru' ? 'index.php' : source.engine === 'moebooru' ? 'post.json' : 'posts.json', source.apiUrl);
@@ -112,7 +121,6 @@ export function actions({ adapters, library, credentials, client, demo, openExte
       if (typeof input !== 'string' || input.length < 2 || input.length > 80 || /[\s*?%:\u0000-\u001f\u007f]/.test(input)) {
         throw new AppError('INVALID_INPUT', 'Use a tag prefix of 2–80 characters.');
       }
-      if (demo) return ['forest', 'fox', 'foliuna_demo', 'wolf', 'deer', 'illustration'].filter((name) => name.startsWith(input.toLowerCase())).map((name) => ({ name, category: 0, count: 10 }));
       if (site !== 'e621') {
         const adapter = adapters[site];
         if (!(adapter instanceof CompatibleAdapter)) throw new AppError('INVALID_INPUT', 'This booru is not configured.');
@@ -130,7 +138,6 @@ export function actions({ adapters, library, credentials, client, demo, openExte
       });
     },
     [CHANNELS.getAccount]: async (): Promise<Account> => {
-      if (demo) throw new AppError('DEMO', 'Account access requires live mode.');
       if (!await credentials.read('e621')) throw new AppError('CREDENTIALS_REQUIRED', 'Save your e621 username and API key in Settings first.');
       const raw = record(await client.cached(new URL('https://e621.net/users/me.json')));
       if (typeof raw.name !== 'string' || typeof raw.level_string !== 'string') throw new AppError('INVALID_RESPONSE', 'Invalid account response.');

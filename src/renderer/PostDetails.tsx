@@ -1,19 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { TAG_CATEGORIES, type Post } from '../shared/contracts';
-import { useDialog } from './useDialog';
+import type { Playback } from './VideoPlayer';
 import { PostMedia } from './PostMedia';
 import { capabilities } from './platform';
-import { MobileViewer } from './MobileViewer';
+import { MediaViewer } from './MediaViewer';
+import { useSwipe } from './useSwipe';
 const ratingNames = { s: 'Safe', q: 'Questionable', e: 'Explicit' };
 const size = (bytes: number) => bytes > 0 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : 'Size not supplied';
 
-export function PostDetails({ selected, safeOnly, demo, libraryReady, downloading, message, downloadError, onDownload, onCancelDownload, onClose, onPrevious, onNext, busy, position, navigationError, onTag, favoriteTags, onFavorite, onCollections }: {
-  selected: Post; safeOnly: boolean; demo: boolean; libraryReady: boolean; downloading: boolean; message: string; downloadError: string;
+export function PostDetails({ selected, safeOnly, libraryReady, downloading, message, downloadError, onDownload, onCancelDownload, onClose, onPrevious, onNext, busy, position, navigationError, onTag, favoriteTags, onFavorite, onCollections }: {
+  selected: Post; safeOnly: boolean; libraryReady: boolean; downloading: boolean; message: string; downloadError: string;
   onDownload(post: Post): Promise<void>; onCancelDownload(): Promise<void>; onClose(): void;
   onPrevious?: () => void; onNext?: () => void; busy: boolean; position: string; navigationError: string;
   onCollections?(post: Post): void; onTag(tag: string, exclude: boolean): void; favoriteTags: string[]; onFavorite(tag: string): void;
 }) {
-  const ref = useDialog();
+  const ref = useRef<HTMLElement>(null);
+  const playback = useRef<Playback | null>(null);
   const [post, setPost] = useState<Post | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -25,9 +27,15 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
   const tagOpener = useRef<HTMLButtonElement | null>(null);
   function closeTagMenu() { setTagMenu(null); tagOpener.current?.focus(); }
   const loading = !post && !error;
+  const swipe = useSwipe(onPrevious, onNext, !busy && !loading);
+  useEffect(() => { const opener = document.activeElement; ref.current?.focus(); return () => { if (opener instanceof HTMLElement && opener.isConnected) opener.focus(); }; }, []);
+  useEffect(() => {
+    const back = (event: Event) => { event.preventDefault(); if (tagMenu) closeTagMenu(); else onClose(); };
+    window.addEventListener('foliuna-back', back); return () => window.removeEventListener('foliuna-back', back);
+  }, [tagMenu, onClose]);
   useEffect(() => {
     let active = true;
-    setError(''); setPost(null); setImageSize('sample'); setTagMenu(null); setOpenError(''); setFullscreen(false);
+    setError(''); setPost(null); setImageSize('sample'); setTagMenu(null); setOpenError('');
     if (ref.current) ref.current.scrollTop = 0;
     (selected.archive ? window.foliuna.galleryPost({ sha256: selected.archive.sha256, provider: selected.provider, id: selected.id }) : window.foliuna.getPost({ provider: selected.provider, id: selected.id })).then((response) => {
       if (!active) return;
@@ -48,8 +56,10 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
     finally { setOpening(false); }
   }
 
-  return <dialog ref={ref} className="details-dialog" aria-labelledby="post-title" onCancel={(event) => { event.preventDefault(); if (tagMenu) closeTagMenu(); else onClose(); }} onClick={(event) => { if (event.target === event.currentTarget) onClose(); }} onKeyDown={(event) => {
-    if (event.target instanceof HTMLElement && event.target.closest('input,select,textarea,video,iframe,[role="menu"]')) return;
+  return <section ref={ref} tabIndex={-1} className="details-page" aria-labelledby="post-title" onKeyDown={(event) => {
+    if (event.key === 'Escape') { event.preventDefault(); if (tagMenu) closeTagMenu(); else onClose(); return; }
+    if (event.key === 'F11' && post) { event.preventDefault(); setFullscreen(true); return; }
+    if (event.target instanceof HTMLElement && event.target.closest('input,select,textarea,iframe,[role="menu"],[data-media-controls]')) return;
     if (!busy && !loading && event.key === 'ArrowLeft' && onPrevious) { event.preventDefault(); onPrevious(); }
     if (!busy && !loading && event.key === 'ArrowRight' && onNext) { event.preventDefault(); onNext(); }
   }}>
@@ -59,12 +69,13 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
       {!post && !error && <p role="status">Loading post details…</p>}
       {error && <div role="alert" className="error-message">{error}<button onClick={() => setRetry((value) => value + 1)}>Retry details</button></div>}
       {post && <div className="detail-grid"><div className="viewer-column"><div className="viewer-controls"><label htmlFor="image-size">Image size</label><select id="image-size" value={imageSize} onChange={(event) => setImageSize(event.target.value as 'sample' | 'original')} disabled={['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension)}><option value="sample">Sample</option><option value="original" disabled={!post.originalUrl}>Full size</option></select>
-        <button disabled={post.unavailable} onClick={() => { if (!capabilities.floatingViewer) { setFullscreen(true); return; } void window.foliuna.openViewer(post.archive ? { archiveSha: post.archive.sha256, source: { provider: post.provider, id: post.id }, size: imageSize } : { provider: post.provider, id: post.id, size: imageSize }).then((response) => { if (!response.ok) setOpenError(response.error.message); }).catch(() => setOpenError('Could not open the media window.')); }}>{capabilities.floatingViewer ? 'Open media window ↗' : 'Fullscreen'}</button></div>
-        <div className="detail-preview"><PostMedia key={`${post.provider}:${post.id}`} post={post} size={imageSize} /><span>{post.archive ? 'Archived original' : ['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension) ? 'Original media' : imageSize === 'original' ? 'Full-resolution image' : 'Sample image'}{!post.archive && ' · Unsaved'}</span></div>
+        <button disabled={post.unavailable} onClick={() => setFullscreen(true)}>Fullscreen</button>
+        {capabilities.floatingViewer && <button disabled={post.unavailable} onClick={() => { void window.foliuna.openViewer(post.archive ? { archiveSha: post.archive.sha256, source: { provider: post.provider, id: post.id }, size: imageSize } : { provider: post.provider, id: post.id, size: imageSize }).then((response) => { if (!response.ok) setOpenError(response.error.message); }).catch(() => setOpenError('Could not open the media window.')); }}>Open media window ↗</button>}</div>
+        <div className="detail-preview" {...swipe}>{!fullscreen && <PostMedia key={`${post.provider}:${post.id}`} post={post} size={imageSize} playback={playback} onFullscreen={() => setFullscreen(true)} />}<span>{post.archive ? 'Archived original' : ['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension) ? 'Original media' : imageSize === 'original' ? 'Full-resolution image' : 'Sample image'}{!post.archive && ' · Unsaved'}</span></div>
       </div>
         <div className="detail-info"><div className="detail-badges"><span className={`rating-badge rating-${post.rating}`}>{['s', 'sensitive'].includes(post.sourceRating ?? '') && post.source?.safeRating === 'g' ? 'Sensitive' : ratingNames[post.rating]}</span><span>{post.file.extension.toUpperCase()} · {size(post.file.size)}</span></div><dl><div><dt>Dimensions</dt><dd>{post.file.width} × {post.file.height}</dd></div><div><dt>Score / favorites</dt><dd>{post.score} / {post.favorites}</dd></div><div><dt>Posted</dt><dd>{post.createdAt && !Number.isNaN(Date.parse(post.createdAt)) ? new Date(post.createdAt).toLocaleDateString() : 'Unknown'}</dd></div></dl>
-          <button className="primary-button source-button" onClick={() => void openPost()} disabled={demo || opening}>{demo ? 'Fictional demo post' : opening ? 'Opening…' : 'Open source post ↗'}</button>{openError && <p role="alert" className="error-message">{openError}</p>}
-          {!post.archive && <button className="archive-button" disabled={demo || downloading || post.unavailable || !post.file.url} onClick={() => void onDownload(post)}>{downloading ? 'Archiving…' : libraryReady ? 'Download original' : 'Set up archive folder'}</button>}
+          <button className="primary-button source-button" onClick={() => void openPost()} disabled={opening}>{opening ? 'Opening…' : 'Open source post ↗'}</button>{openError && <p role="alert" className="error-message">{openError}</p>}
+          {!post.archive && <button className="archive-button" disabled={downloading || post.unavailable || !post.file.url} onClick={() => void onDownload(post)}>{downloading ? 'Archiving…' : libraryReady ? 'Download original' : 'Set up archive folder'}</button>}
           {downloading && <button className="cancel-button" onClick={() => void onCancelDownload()}>Cancel download</button>}
           {message && <p role="status" className="success-message">{message}</p>}{downloadError && <p role="alert" className="error-message">{downloadError}</p>}
           {post.archive && onCollections && <button disabled={downloading || busy} onClick={() => onCollections(post)}>Manage collections</button>}
@@ -82,6 +93,6 @@ export function PostDetails({ selected, safeOnly, demo, libraryReady, downloadin
 
         </div></div>}
     </div>
-    {fullscreen && post && <MobileViewer post={post} size={imageSize} onClose={() => setFullscreen(false)} />}
-  </dialog>;
+    {fullscreen && <MediaViewer post={post} size={imageSize} playback={playback} error={error} busy={busy || loading} onPrevious={onPrevious} onNext={onNext} onClose={() => setFullscreen(false)} />}
+  </section>;
 }

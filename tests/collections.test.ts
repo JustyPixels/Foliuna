@@ -7,7 +7,7 @@ import { ArchiveLibrary } from '../src/main/archive/library';
 import { Gallery } from '../src/main/archive/gallery';
 import { digest } from '../src/main/archive/local-files';
 import { sidecar } from '../src/main/archive/metadata';
-import { demoRawPost } from '../src/main/adapters/demo';
+import { demoRawPost } from './fixtures/posts';
 import { normalizePost } from '../src/main/adapters/e621';
 import { actions, respond } from '../src/main/ipc';
 import { CredentialStore } from '../src/main/credentials';
@@ -21,7 +21,7 @@ let profile: string; let root: string; let library: ArchiveLibrary; let collecti
 const hashes: string[] = [];
 beforeEach(async () => {
   profile = await mkdtemp(join(tmpdir(), 'foliuna-collections-')); root = join(profile, 'archive'); await mkdir(root);
-  library = new ArchiveLibrary(profile, {}, false, vi.fn()); await library.select(root); collections = new Collections(library); gallery = new Gallery(library);
+  library = new ArchiveLibrary(profile, {}, vi.fn()); await library.select(root); collections = new Collections(library); gallery = new Gallery(library);
   hashes.length = 0;
   for (let index = 0; index < 2; index++) {
     const bytes = Buffer.concat([png, Buffer.from([index])]); const hash = digest(bytes); hashes.push(hash);
@@ -109,7 +109,7 @@ describe('saved collections', () => {
     await collections.membership({ id, sha256: hashes[0], present: true });
     await library.close(); const moved = join(profile, 'moved'); await rename(root, moved); root = moved;
     for (const suffix of ['', '-wal', '-shm']) await rm(join(root, '.foliuna', `library.sqlite${suffix}`), { force: true });
-    library = new ArchiveLibrary(profile, {}, false, vi.fn()); await library.select(root); collections = new Collections(library); gallery = new Gallery(library);
+    library = new ArchiveLibrary(profile, {}, vi.fn()); await library.select(root); collections = new Collections(library); gallery = new Gallery(library);
     expect(await collections.list()).toEqual([{ id: 2, name: 'Empty', assets: 0, pending: 0 }, { id, name: 'Portable', assets: 0, pending: 1 }]);
     expect((await gallery.search({ collectionId: id, tags: '', page: 1 })).posts).toEqual([]);
     await gallery.importSidecars(); expect((await collections.list()).find((item) => item.id === id)).toMatchObject({ assets: 1, pending: 0 });
@@ -141,7 +141,7 @@ describe('saved collections', () => {
   });
   it('routes named IPC capabilities through sender checks and sanitized errors', async () => {
     const handlers = actions({ adapters: {}, library, credentials: new CredentialStore(profile, { available: async () => false, encrypt: vi.fn(), decrypt: vi.fn() }),
-      client: new ApiClient(vi.fn()), demo: false, openExternal: vi.fn(), selectDirectory: async () => null });
+      client: new ApiClient(vi.fn()), openExternal: vi.fn(), selectDirectory: async () => null });
     const sender = { senderId: 1, windowId: 1, isMainFrame: true, url: APP_URL };
     expect(await respond({ ...sender, isMainFrame: false }, () => handlers[CHANNELS.collectionCreate]({ name: 'Forbidden' }))).toMatchObject({ ok: false, error: { code: 'FORBIDDEN' } });
     expect(await handlers[CHANNELS.collectionList](undefined)).toEqual([]);

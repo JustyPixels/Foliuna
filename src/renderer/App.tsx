@@ -11,6 +11,8 @@ import { PostGrid } from './PostGrid';
 import { TagSearch } from './TagSearch';
 import { AccountDialog } from './AccountDialog';
 import { capabilities, isAndroid } from './platform';
+import { TitleBar } from './TitleBar';
+import { Icon } from './Icon';
 
 
 type BrowseRequest = SearchRequest & { collectionId?: number };
@@ -111,11 +113,12 @@ export function App() {
   useEffect(() => {
     if (!isAndroid) return;
     const back = (event: Event) => {
+      if (selected) return;
       if (view !== 'discover') { event.preventDefault(); changeView('discover'); }
     };
     window.addEventListener('foliuna-back', back);
     return () => window.removeEventListener('foliuna-back', back);
-  }, [view, busy, maintaining, collectionBusy]);
+  }, [view, busy, maintaining, collectionBusy, selected]);
   async function nextPost() {
     if (!result || !query) return;
     if (selectedIndex + 1 < result.posts.length) setSelected(result.posts[selectedIndex + 1]);
@@ -187,28 +190,27 @@ export function App() {
     catch { setDownloadError('Could not cancel the download.'); }
   }
 
-  return <div className="app-shell">
-    <aside className="sidebar" aria-label="Workspace">
+  return <>{!isAndroid && <TitleBar />}<div className={`app-shell${selected ? ' post-open' : ''}`}>
+    <aside className="sidebar" aria-label="Workspace" hidden={selected !== null}>
       <div className="brand"><span className="brand-mark"><Leaf /></span><span>Foliuna<small>Search · Archive · Collect</small></span></div>
       <p className="nav-label">YOUR WORKSPACE</p>
-      <nav><button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${!isGallery ? 'active' : ''}`} aria-current={!isGallery ? 'page' : undefined} onClick={() => changeView('discover')}><span aria-hidden="true">⌕</span> Discover</button>
-        <button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${view === 'gallery' ? 'active' : ''}`} aria-current={view === 'gallery' ? 'page' : undefined} onClick={() => changeView('gallery')}><span aria-hidden="true">▦</span> Gallery</button>
-        <button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${isCollections ? 'active' : ''}`} aria-current={isCollections ? 'page' : undefined} onClick={() => changeView('collections')}><span aria-hidden="true">▤</span> Collections</button>
+      <nav><button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${!isGallery ? 'active' : ''}`} aria-current={!isGallery ? 'page' : undefined} onClick={() => changeView('discover')}><Icon name="discover" /> Discover</button>
+        <button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${view === 'gallery' ? 'active' : ''}`} aria-current={view === 'gallery' ? 'page' : undefined} onClick={() => changeView('gallery')}><Icon name="gallery" /> Gallery</button>
+        <button disabled={busy || maintaining || collectionBusy} className={`nav-item settings-nav ${isCollections ? 'active' : ''}`} aria-current={isCollections ? 'page' : undefined} onClick={() => changeView('collections')}><Icon name="collections" /> Collections</button>
         {!isAndroid && <><button className="nav-item settings-nav" disabled={maintaining || collectionBusy} onClick={() => setAccountOpen(true)}><span aria-hidden="true">☆</span> Account & favorites</button>
         <button className="nav-item settings-nav" disabled={maintaining || collectionBusy} onClick={() => { setSelected(null); setSettingsOpen(true); }}><span aria-hidden="true">⚙</span> Settings</button></>}
       </nav>
 
-      <div className="sidebar-footer"><span className="status-dot" /> Release candidate <small>v0.5.0-rc.1</small></div>
+      <div className="sidebar-footer"><span className="status-dot" /> Release candidate <small>v0.5.0-rc.2</small></div>
     </aside>
-    <div className="workspace">
+    <div className="workspace" hidden={selected !== null}>
       <header className="topbar"><span>Workspace <span className="slash">/</span> <strong>{isCollections ? 'Collections' : isGallery ? 'Gallery' : 'Discover'}</strong></span><div className="topbar-right">
         {isAndroid && <><button aria-label="Account & favorites" onClick={() => setAccountOpen(true)}>☆</button><button aria-label="Settings" onClick={() => setSettingsOpen(true)}>⚙</button></>}
-        <span className={`mode-badge ${library?.demo ? 'demo' : ''}`}>{isCollections ? 'OFFLINE COLLECTIONS' : isGallery ? 'OFFLINE GALLERY' : library ? library.demo ? 'LOCAL DEMO' : 'LIVE SEARCH' : 'STARTING'}</span>
+        <span className="mode-badge">{isCollections ? 'OFFLINE COLLECTIONS' : isGallery ? 'OFFLINE GALLERY' : library ? 'LIVE SEARCH' : 'STARTING'}</span>
         <span className="library-state">{libraryError ? 'Library unavailable' : library ? `Library ready · ${library.assets} saved` : 'Opening library…'}</span>
       </div></header>
       <main>
         <div className="intro"><div><h1>{isCollections ? 'Collections' : isGallery ? 'Gallery' : 'Discover'}<span>.</span></h1><p className="subtitle">{isCollections ? 'Group saved media without making extra copies.' : isGallery ? 'Your saved media, available offline.' : 'Search boorus and save your favorites.'}</p></div><span className="intro-leaf"><Leaf /></span></div>
-        {library?.demo && <div className="demo-banner" role="note"><strong>Offline demo</strong> Fictional posts · no site requests.</div>}
         {library?.issue && <p role="alert" className="error-message">{library.issue}</p>}
         {downloading && <div role="status" className="download-banner">Downloading and preserving the original… <button onClick={() => void cancelDownload()}>Cancel download</button></div>}
         {downloadMessage && <p role="status" className="success-message">{downloadMessage}</p>}{downloadError && <p role="alert" className="error-message">{downloadError}</p>}
@@ -234,15 +236,15 @@ export function App() {
           {result && query && (preferences.browsing === 'pages' ? <div className="pagination"><p>Page {result.page} <span>· up to 24 posts per page</span></p><div><button disabled={busy || result.page <= 1} onClick={() => void search({ ...query, page: result.page - 1 })}>← Previous</button><button disabled={busy || !result.hasMore || (!isGallery && result.page >= MAX_PAGE)} onClick={() => void search({ ...query, page: result.page + 1 })}>Next →</button></div></div> :
             <div className="pagination" ref={sentinel}><p>{result.posts.length} posts loaded · page {result.page}</p><button disabled={busy || !result.hasMore} onClick={() => void search({ ...query, page: result.page + 1 }, true)}>{busy ? 'Loading more…' : result.hasMore ? 'Load more posts' : 'End of results'}</button></div>)}
         </section>
-        <footer className="main-footer"><span><span className="status-dot" /> {isGallery ? 'Available locally. No provider requests.' : library?.demo ? 'Local fixtures. Zero network requests.' : 'Downloads start only when you choose.'}</span></footer>
+        <footer className="main-footer"><span><span className="status-dot" /> {isGallery ? 'Available locally. No provider requests.' : 'Downloads start only when you choose.'}</span></footer>
       </main>
     </div>
-    {selected && <PostDetails selected={selected} safeOnly={query?.safeOnly !== false} demo={library?.demo ?? false} libraryReady={Boolean(library?.root)} downloading={downloading} message={downloadMessage} downloadError={downloadError} onDownload={download} onCancelDownload={cancelDownload} onClose={() => setSelected(null)} navigationError={error} busy={busy || maintaining || collectionBusy} position={`${selectedIndex + 1} of ${result?.posts.length ?? 0} loaded`}
+    {selected && <PostDetails selected={selected} safeOnly={query?.safeOnly !== false} libraryReady={Boolean(library?.root)} downloading={downloading} message={downloadMessage} downloadError={downloadError} onDownload={download} onCancelDownload={cancelDownload} onClose={() => setSelected(null)} navigationError={error} busy={busy || maintaining || collectionBusy} position={`${selectedIndex + 1} of ${result?.posts.length ?? 0} loaded`}
       onPrevious={selectedIndex > 0 ? () => setSelected(result!.posts[selectedIndex - 1]) : undefined}
       onNext={result && (selectedIndex < result.posts.length - 1 || result.hasMore) ? () => void nextPost() : undefined}
       onCollections={(post) => { setMembershipChanged(false); setCollectPost(post); }} onTag={tagAction} favoriteTags={preferences.favoriteTags} onFavorite={favorite} />}
     {collectPost && <CollectionDialog key={collectPost.archive?.sha256} post={collectPost} onChanged={() => setMembershipChanged(true)} onClose={() => { setCollectPost(null); if (membershipChanged && isCollections) { setSelected(null); void openCollections(collectionId); } }} />}
     {accountOpen && <AccountDialog preferences={preferences} onClose={() => setAccountOpen(false)} onRemove={favorite} onSearch={(value, site = provider) => { setAccountOpen(false); setView('discover'); setProvider(site); setTags(value); void search({ provider: site, tags: value, page: 1, safeOnly }, false, 'discover'); }} />}
     {settingsOpen && <SettingsDialog onProviders={updateProviders} preferencesBusy={preferencesBusy} preferences={preferences} onPreferences={savePreferences} downloading={downloading} onClose={() => { setSettingsOpen(false); if (isCollections) { void openCollections(); } else if (isGallery) { setGalleryRevision((value) => value + 1); void search({ provider: 'e621', tags, page: 1, safeOnly }); } }} onLibrary={(value) => { if (value.root !== library?.root) { setCollectionId(null); setCollections([]); setResult(null); setQuery(null); setSelected(null); } setLibrary(value); }} />}
-  </div>;
+  </div></>;
 }

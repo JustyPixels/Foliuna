@@ -1,7 +1,7 @@
-import { MAX_PAGE, PAGE_SIZE, type Post, type Provider, type SearchRequest, type SearchResult } from '../../shared/contracts';
-import { AppError, positiveInteger, safeSearchTags, searchRequest } from '../../shared/validation';
-import { normalizePost } from './e621';
-import type { BooruAdapter } from './types';
+import { MAX_PAGE, PAGE_SIZE, type Post, type Provider, type SearchRequest, type SearchResult } from '../../src/shared/contracts';
+import { AppError, positiveInteger, safeSearchTags, searchRequest } from '../../src/shared/validation';
+import { normalizePost } from '../../src/main/adapters/e621';
+import type { BooruAdapter } from '../../src/main/adapters/types';
 
 export function demoRawPost(id = 1001) {
   const species = ['fox', 'wolf', 'deer'][Math.abs(id - 1001) % 3];

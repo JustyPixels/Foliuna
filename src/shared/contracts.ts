@@ -32,7 +32,7 @@ export interface Post {
   archive?: { sha256: string; capturedAt: string; sourceCount: number; missing: boolean; provenance: { provider: Provider; id: number }[] };
 }
 export interface SearchResult { posts: Post[]; page: number; hasMore: boolean }
-export interface LibraryStatus { assets: number; schemaVersion: number; demo: boolean; root: string | null; issue: string | null }
+export interface LibraryStatus { assets: number; schemaVersion: number; root: string | null; issue: string | null }
 export interface CredentialInput { provider: Provider; username: string; apiKey: string }
 export interface CredentialStatus { provider: Provider; saved: boolean; username: string | null; locked: boolean }
 export interface Settings { encryptionAvailable: boolean; credentials: CredentialStatus[]; library: LibraryStatus; providers?: ProviderDefinition[] }
@@ -50,6 +50,8 @@ export interface PlatformCapabilities { name: 'windows' | 'android'; chooseLibra
 export const WINDOWS_CAPABILITIES: PlatformCapabilities = { name: 'windows', chooseLibrary: true, importSidecars: true, exportLibrary: false, floatingViewer: true, flash: true };
 
 export interface FoliunaApi {
+  setFullscreen(enabled: boolean): Promise<Result<null>>;
+  windowAction(action: 'minimize' | 'maximize' | 'close'): Promise<Result<null>>;
   platform(): Promise<Result<PlatformCapabilities>>;
   exportLibrary(): Promise<Result<{ exported: number; cancelled: boolean }>>;
   search(request: SearchRequest): Promise<Result<SearchResult>>;
@@ -84,6 +86,8 @@ export interface FoliunaApi {
 }
 
 export const CHANNELS = {
+  setFullscreen: 'foliuna:set-fullscreen',
+  windowAction: 'foliuna:window-action',
   platform: 'foliuna:platform',
   exportLibrary: 'foliuna:export-library',
   search: 'foliuna:search',

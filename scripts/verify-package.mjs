@@ -36,6 +36,8 @@ function check(files, prefix = '') {
 }
 check(header.header.files);
 assert.ok(entries.includes('dist/main.cjs') && entries.includes('dist/preload.cjs') && entries.includes('dist/renderer/index.html'));
+assert.ok(!entries.some((path) => path.startsWith('dist/renderer/demo/')), 'Do not ship fictional demo artwork');
+assert.ok(!extractFile(archive, 'dist/main.cjs').toString().includes('FOLIUNA_DEMO'), 'Do not ship offline demo mode');
 const pkg = JSON.parse(extractFile(archive, 'package.json'));
 assert.equal(pkg.author.name, 'JustyPixels'); assert.equal(pkg.bugs.url, 'https://github.com/JustyPixels/Foliuna/issues');
 assert.ok(!pkg.dependencies && !pkg.devDependencies && !pkg.scripts);

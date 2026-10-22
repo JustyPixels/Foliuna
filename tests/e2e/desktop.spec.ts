@@ -5,9 +5,9 @@ import { join } from 'node:path';
 
 test('Windows desktop: local search journey, database startup and Electron isolation', async () => {
   const data = mkdtempSync(join(tmpdir(), 'foliuna-desktop-'));
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DEMO: '1', FOLIUNA_DATA_DIR: data };
+  const env: Record<string, string> = { ...process.env, FOLIUNA_FIXTURE_BROWSING: '1', FOLIUNA_DATA_DIR: data };
   delete env.ELECTRON_RUN_AS_NODE;
-  const app = await electron.launch({ args: ['.'], env });
+  const app = await electron.launch({ args: ['tests/fixtures/media-app.cjs'], env });
   try {
     const page = await app.firstWindow();
     const pageErrors: string[] = [];
@@ -15,7 +15,15 @@ test('Windows desktop: local search journey, database startup and Electron isola
     page.on('pageerror', (error) => pageErrors.push(error.message));
     page.on('request', (request) => { if (/^https?:/.test(request.url())) remoteRequests.push(request.url()); });
     await expect(page).toHaveTitle('Foliuna');
-    await expect(page.getByText('LOCAL DEMO', { exact: true })).toBeVisible();
+    await expect(page.getByText('LIVE SEARCH', { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => document.querySelector('.sidebar')!.getBoundingClientRect().top >= document.querySelector('.window-titlebar')!.getBoundingClientRect().bottom)).toBe(true);
+    await page.getByRole('button', { name: 'Maximize or restore window' }).click();
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(true);
+    await page.getByRole('button', { name: 'Maximize or restore window' }).click();
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMaximized())).toBe(false);
+    await page.getByRole('button', { name: 'Minimize window' }).click();
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMinimized())).toBe(true);
+    await app.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows()[0].restore(); BrowserWindow.getAllWindows()[0].focus(); });
     await expect(page.getByText('Library ready · 0 saved')).toBeVisible();
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setBounds({ width: 900, height: 650 }));
     expect(await page.evaluate(() => innerWidth)).toBeLessThanOrEqual(1200);
@@ -28,9 +36,9 @@ test('Windows desktop: local search journey, database startup and Electron isola
     await expect(page.getByRole('button', { name: /Previous/ })).toBeDisabled();
     await expect.poll(() => page.locator('.post-card img').first().evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await page.getByRole('button', { name: 'View post 1001' }).click();
-    await expect(page.getByRole('dialog', { name: 'Post #1001' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Post #1001' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Categorized tags' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Fictional demo post' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Open source post ↗' })).toBeEnabled();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'View post 1001' })).toBeFocused();
@@ -40,7 +48,7 @@ test('Windows desktop: local search journey, database startup and Electron isola
     await page.getByLabel('E621 CONTENT').selectOption('all');
     await page.getByLabel('SEARCH TAGS').fill('fox -wolf');
     await page.getByRole('button', { name: 'Search', exact: true }).click();
-    await expect(page.getByRole('button', { name: /^View post/ })).toHaveCount(10);
+    await expect(page.getByRole('button', { name: /^View post/ })).toHaveCount(24);
 
     const sandboxed = await app.evaluate(({ app, BrowserWindow }) => {
       const pid = BrowserWindow.getAllWindows()[0].webContents.getOSProcessId();
@@ -49,7 +57,7 @@ test('Windows desktop: local search journey, database startup and Electron isola
     expect(sandboxed).toBe(true);
     expect(await page.evaluate(() => ({ require: typeof (window as unknown as { require?: unknown }).require,
       process: typeof (window as unknown as { process?: unknown }).process, methods: Object.keys(window.foliuna).sort() })))
-      .toEqual({ require: 'undefined', process: 'undefined', methods: ['cacheThumbnail', 'cancelDownload', 'chooseLibrary', 'collectionCreate', 'collectionDelete', 'collectionList', 'collectionMembership', 'collectionRename', 'downloadPost', 'exportLibrary', 'galleryPost', 'gallerySearch', 'galleryTags', 'getAccount', 'getPost', 'getPreferences', 'getSettings', 'importSidecars', 'libraryStatus', 'openPost', 'openViewer', 'platform', 'reconcileLibrary', 'removeCredentials', 'removeProvider', 'saveCredentials', 'savePreferences', 'saveProvider', 'search', 'suggestTags', 'testConnection'] });
+      .toEqual({ require: 'undefined', process: 'undefined', methods: ['cacheThumbnail', 'cancelDownload', 'chooseLibrary', 'collectionCreate', 'collectionDelete', 'collectionList', 'collectionMembership', 'collectionRename', 'downloadPost', 'exportLibrary', 'galleryPost', 'gallerySearch', 'galleryTags', 'getAccount', 'getPost', 'getPreferences', 'getSettings', 'importSidecars', 'libraryStatus', 'openPost', 'openViewer', 'platform', 'reconcileLibrary', 'removeCredentials', 'removeProvider', 'saveCredentials', 'savePreferences', 'saveProvider', 'search', 'setFullscreen', 'suggestTags', 'testConnection', 'windowAction'] });
     expect(await page.evaluate(() => window.foliuna.search({ provider: 'e926', tags: '', page: -1 })))
       .toMatchObject({ ok: false, error: { code: 'INVALID_INPUT' } });
     const policy = await app.evaluate(async ({ session }) => {
@@ -68,14 +76,14 @@ test('Windows desktop: local search journey, database startup and Electron isola
     await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByRole('button', { name: /^View post/ })).toHaveCount(24);
     await page.waitForFunction(() => [...document.querySelectorAll<HTMLImageElement>('.post-card img')].filter((image) => image.getBoundingClientRect().top < innerHeight).every((image) => image.complete && image.naturalWidth > 0));
-    await page.screenshot({ path: 'docs/screenshots/discover.png' });
+    await page.screenshot({ path: 'test-results/screenshots/discover.png' });
     await page.getByRole('button', { name: 'View post 1001' }).click();
     await expect(page.getByRole('heading', { name: 'Categorized tags' })).toBeVisible();
     await expect(page.getByLabel('Image size')).toHaveValue('sample');
     await page.getByLabel('Image size').selectOption('original');
     await expect(page.getByAltText('Full-size image of post 1001')).toBeVisible();
     await page.getByLabel('Image size').selectOption('sample');
-    await page.screenshot({ path: 'docs/screenshots/post-details.png' });
+    await page.screenshot({ path: 'test-results/screenshots/post-details.png' });
     const navigation = await app.evaluate(async ({ BrowserWindow }) => {
       const contents = BrowserWindow.getAllWindows()[0].webContents;
       const blocked = new Promise<boolean>((resolve) => contents.once('will-frame-navigate', (event) => resolve(event.defaultPrevented)));

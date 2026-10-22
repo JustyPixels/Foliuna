@@ -23,7 +23,7 @@ try {
   const portable = parseSidecar(JSON.parse(await readFile(join(root, 'media', sidecars[0]), 'utf8')));
   assert.equal(portable.sources.length, saf ? 1 : 3);
   assert.equal(portable.sources.find((source) => source.provider === 'e621')!.snapshots.length, saf ? 1 : 2);
-  const library = new ArchiveLibrary(temp, {}, false, async () => { throw Error('Export import attempted network access'); });
+  const library = new ArchiveLibrary(temp, {}, async () => { throw Error('Export import attempted network access'); });
   try {
     await library.select(root);
     const gallery = new Gallery(library); const collections = new Collections(library);

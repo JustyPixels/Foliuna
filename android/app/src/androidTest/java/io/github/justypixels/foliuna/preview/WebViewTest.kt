@@ -30,7 +30,7 @@ class WebViewTest {
     private fun waitFor(expression: String) {
         val until = System.currentTimeMillis() + 30000
         while (System.currentTimeMillis() < until) { if (js(expression) == "true") return; Thread.sleep(100) }
-        throw AssertionError("Timed out: $expression; page=" + js("document.body.innerText.slice(0,2000)"))
+        throw AssertionError("Timed out: $expression; diagnostic=" + js("JSON.stringify({back:window.__back,cancel:window.__cancel,focus:document.activeElement.tagName,open:!!document.querySelector('.media-viewer[open]')})") + "; page=" + js("document.body.innerText.slice(0,2000)"))
     }
     private fun promise(expression: String): JSONObject {
         js("window.__answer=null;Promise.resolve($expression).then(v=>window.__answer=JSON.stringify(v)).catch(e=>window.__answer=JSON.stringify({failure:String(e)}))")
@@ -38,6 +38,27 @@ class WebViewTest {
         return JSONObject(org.json.JSONTokener(js("window.__answer")).nextValue().toString())
     }
     private fun click(label: String) { assertEquals("true", js("(function(){var b=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===$label||b.getAttribute('aria-label')===$label||(b.matches('.nav-item')&&b.textContent.trim().endsWith($label)));if(!b||b.disabled)return false;b.click();return true})()")) }
+    private fun swipeMedia(selector: String, left: Boolean) {
+        js("document.querySelector('$selector').scrollIntoView({block:'center'})")
+        val point = JSONObject(org.json.JSONTokener(js("JSON.stringify((function(){var r=document.querySelector('$selector').getBoundingClientRect();return {left:(r.left+r.width*.2)*devicePixelRatio,right:(r.left+r.width*.8)*devicePixelRatio,y:(r.top+r.height/2)*devicePixelRatio}})())")).nextValue().toString())
+        val offset = IntArray(2); instrumentation.runOnMainSync { web.getLocationOnScreen(offset) }
+        val from = point.getDouble(if (left) "right" else "left").toInt() + offset[0]
+        val to = point.getDouble(if (left) "left" else "right").toInt() + offset[0]
+        assertTrue(UiDevice.getInstance(instrumentation).swipe(from, point.getDouble("y").toInt() + offset[1], to, point.getDouble("y").toInt() + offset[1], 15))
+    }
+    private fun bars(scenario: ActivityScenario<MainActivity>, visible: Boolean) {
+        val until = System.currentTimeMillis() + 10000
+        while (System.currentTimeMillis() < until) {
+            var matches = false
+            scenario.onActivity {
+                val insets = androidx.core.view.ViewCompat.getRootWindowInsets(it.window.decorView)
+                matches = insets?.isVisible(androidx.core.view.WindowInsetsCompat.Type.statusBars()) == visible && insets.isVisible(androidx.core.view.WindowInsetsCompat.Type.navigationBars()) == visible
+            }
+            if (matches) return
+            Thread.sleep(100)
+        }
+        fail("System bars visibility did not become $visible")
+    }
     private fun screenshot(name: String) {
         val file = File(context.cacheDir, "$name.png")
         assertTrue(UiDevice.getInstance(instrumentation).takeScreenshot(file))
@@ -61,7 +82,7 @@ class WebViewTest {
                     val format = if (id == 43) "webm" else "gif"
                     post.getJSONObject("file").put("url", "https://static1.e621.net/clip.$format").put("ext", format).put("size", clips[format]!!.size).put("width", if (id == 43) 160 else 32).put("height", if (id == 43) 90 else 32)
                 }
-                HttpResult(200, mapOf("content-type" to "application/json"), ByteArrayInputStream(j((if (detail) "post" else "posts") to if (detail) post else a(listOf(post))).toString().toByteArray())) {}
+                HttpResult(200, mapOf("content-type" to "application/json"), ByteArrayInputStream(j((if (detail) "post" else "posts") to if (detail) post else a(listOf(post, raw.copy().put("id", 45)))).toString().toByteArray())) {}
             }
         }, 0)
         MainActivity.testServices = state; MainActivity.testExportDestination = null
@@ -73,22 +94,41 @@ class WebViewTest {
             }
         } finally { if (emulated) UiDevice.getInstance(instrumentation).unfreezeRotation(); state.archive.close(); MainActivity.testServices = null; MainActivity.testExportDestination = null; root.deleteRecursively() }
     }
-    @Test fun bridgeIsolationAndRealUiJourney() = run {
+    @Test fun bridgeIsolationAndRealUiJourney() = run { scenario ->
         assertEquals("android", promise("window.foliuna.platform()").getJSONObject("value").text("name"))
+        assertEquals("INVALID_INPUT", promise("window.foliuna.setFullscreen('yes')").getJSONObject("error").text("code"))
+        assertEquals("UNSUPPORTED", promise("window.foliuna.windowAction('minimize')").getJSONObject("error").text("code"))
         assertFalse(js("Object.keys(window.foliuna).join(',')").contains("fetch"))
         assertFalse(js("JSON.stringify(window.Capacitor.Plugins.CapacitorHttp)").contains("get"))
         assertEquals("false", js("!!window.Capacitor.Plugins.WebView.setServerBasePath"))
         assertTrue(promise("fetch('https://example.com/').then(()=>({blocked:false})).catch(()=>({blocked:true}))").getBoolean("blocked"))
         assertTrue(promise("fetch('/_capacitor_file_/data/data/secret').then(r=>({blocked:r.status===403}))").getBoolean("blocked"))
         js("document.querySelector('.search-panel form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))")
-        waitFor("document.querySelectorAll('.post-card').length===1")
+        waitFor("document.querySelectorAll('.post-card').length===2")
         js("document.querySelector('.post-card').scrollIntoView()")
         waitFor("Array.from(document.querySelectorAll('.post-card img')).every(i=>i.complete&&i.naturalWidth>0)")
+        assertEquals("true", js("Array.from(document.querySelectorAll('.post-card img')).every(function(image){var r=image.getBoundingClientRect(),p=image.closest('.post-image').getBoundingClientRect();return r.width>40&&r.height>40&&Math.abs(r.top-p.top)<3&&Math.abs(r.left-p.left)<3})"))
         click("'View post 42'")
-        waitFor("(document.querySelector('dialog[open]')||{innerText:''}).innerText.includes('Download original')")
-        click("'Fullscreen'"); waitFor("!!document.querySelector('.mobile-viewer[open]')")
+        waitFor("(document.querySelector('.details-page')||{innerText:''}).innerText.includes('Download original')")
+        assertEquals("false", js("!!document.querySelector('.details-page dialog')"))
+        swipeMedia(".detail-preview", true); waitFor("document.querySelector('#post-title').innerText==='Post #45'")
+        waitFor("document.querySelector('.details-page').innerText.includes('Categorized tags')")
+        swipeMedia(".detail-preview", false); waitFor("document.querySelector('#post-title').innerText==='Post #42'")
+        waitFor("document.querySelector('.details-page').innerText.includes('Categorized tags')")
+        click("'Fullscreen'"); waitFor("!!document.querySelector('.media-viewer[open]')")
+        bars(scenario, false)
+        // Android's first-use immersive hint consumes Back before it reaches the app.
+        val device = UiDevice.getInstance(instrumentation)
+        device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(java.util.regex.Pattern.compile("(?i)got it"))), 3000)?.click()
+        waitFor("(document.querySelector('.media-viewer img')||{}).naturalWidth>0")
+        swipeMedia(".immersive-media", true); waitFor("document.querySelector('.media-viewer header').innerText.includes('Post #45')")
+        waitFor("(document.querySelector('.media-viewer img')||{}).naturalWidth>0")
+        swipeMedia(".immersive-media", false); waitFor("document.querySelector('.media-viewer header').innerText.includes('Post #42')")
+        js("window.__back=0;window.__cancel=0;document.addEventListener('backbutton',()=>window.__back++);document.querySelector('.media-viewer').addEventListener('cancel',()=>window.__cancel++)")
         UiDevice.getInstance(instrumentation).pressBack()
-        waitFor("!document.querySelector('.mobile-viewer') && !!document.querySelector('.details-dialog[open]')")
+        waitFor("!document.querySelector('.media-viewer') && !!document.querySelector('.details-page')")
+        waitFor("window.__back>0 && window.__cancel===1")
+        bars(scenario, true)
         click("'Download original'")
         waitFor("document.body.innerText.includes('Archived')||document.body.innerText.includes('Saved')||document.body.innerText.includes('already')")
         click("'Close post details'"); click("'Gallery'")
@@ -98,7 +138,6 @@ class WebViewTest {
         assertFalse(js("document.querySelector('dialog[open]').innerText").contains("Choose archive folder"))
         assertTrue(js("document.querySelector('dialog[open]').innerText").contains("Android Keystore"))
         click("'Export library…'")
-        val device = UiDevice.getInstance(instrumentation)
         assertTrue(device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg("com.google.android.documentsui")), 10000) || device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg("com.android.documentsui")), 10000))
         // Older DocumentsUI navigates through folders before returning cancellation.
         repeat(6) { if (device.currentPackageName != context.packageName) { device.pressBack(); device.wait(androidx.test.uiautomator.Until.hasObject(androidx.test.uiautomator.By.pkg(context.packageName)), 1000) } }
@@ -110,6 +149,7 @@ class WebViewTest {
     }
     @Test fun responsiveLayoutRotationAndKeyboard() = run { scenario ->
         assertEquals("false", js("document.documentElement.scrollWidth>window.innerWidth"))
+        assertEquals("true", js("Array.from(document.querySelectorAll('.nav-item')).every(function(button){var r=button.getBoundingClientRect(),i=button.querySelector('svg').getBoundingClientRect();return Math.abs((r.left+r.width/2)-(i.left+i.width/2))<2&&i.top>=r.top&&r.bottom<=innerHeight+1&&r.height>=44})"))
         screenshot("android-layout")
         js("document.querySelector('#tags').focus()")
         waitFor("document.activeElement.id==='tags'")

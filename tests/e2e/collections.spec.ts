@@ -6,7 +6,7 @@ import { join } from 'node:path';
 test('collections: create, collect, browse, rename, remove, restart and restore memberships with no network', async () => {
   test.setTimeout(90000);
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-collections-ui-')); const root = join(profile, 'archive');
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_DEMO: '0', FOLIUNA_FIXTURE_OFFLINE: '1', FOLIUNA_FIXTURE_BROWSING: '1' }; delete env.ELECTRON_RUN_AS_NODE;
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_FIXTURE_OFFLINE: '1', FOLIUNA_FIXTURE_BROWSING: '1' }; delete env.ELECTRON_RUN_AS_NODE;
   let app = await electron.launch({ args: ['tests/fixtures/media-app.cjs'], env });
   try {
     let page = await app.firstWindow(); const errors: string[] = [];
@@ -36,13 +36,13 @@ test('collections: create, collect, browse, rename, remove, restart and restore 
     await page.getByLabel('SEARCH TAGS').fill('provider:e621'); await page.getByRole('button', { name: 'Search', exact: true }).click();
     await page.getByRole('button', { name: 'View post 1030' }).click();
     await expect.poll(() => page.getByAltText('Sample of post 1030').evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(240);
-    await page.getByRole('button', { name: '← Previous post' }).click(); await expect(page.getByRole('dialog', { name: 'Post #1003' })).toBeVisible();
+    await page.getByRole('button', { name: '← Previous post' }).click(); await expect(page.getByRole('region', { name: 'Post #1003' })).toBeVisible();
     await page.locator('video').evaluate(async (video: HTMLVideoElement) => { video.muted = true; await video.play(); });
     await expect.poll(() => page.locator('video').evaluate((video: HTMLVideoElement) => video.videoWidth)).toBe(160);
     await page.getByRole('button', { name: 'Manage collections', exact: true }).click();
     await page.getByRole('checkbox', { name: /^Motion favorites/ }).click(); await expect(page.getByRole('checkbox', { name: /^Motion favorites/ })).not.toBeChecked(); await expect(page.getByRole('checkbox', { name: /^Motion favorites/ })).toBeEnabled();
     await page.getByRole('button', { name: 'Done', exact: true }).click(); await expect(page.getByRole('button', { name: /^View post/ })).toHaveCount(1);
-    await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: 'docs/screenshots/collections.png' });
+    await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: 'test-results/screenshots/collections.png' });
     const manifest = JSON.parse(readFileSync(join(root, '.foliuna', 'collections.json'), 'utf8'));
     expect(manifest.collections.find((item: { id: number }) => item.id === 2).assets).toHaveLength(1);
     const originalHash = manifest.collections[0].assets[0]; const original = join(root, 'media', `${originalHash}.png`); const bytes = readFileSync(original);

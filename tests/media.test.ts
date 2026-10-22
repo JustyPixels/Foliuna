@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PostMedia, mediaRoute } from '../src/main/media';
 import { normalizePost } from '../src/main/adapters/e621';
-import { demoRawPost } from '../src/main/adapters/demo';
+import { demoRawPost } from './fixtures/posts';
 
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jB1sAAAAASUVORK5CYII=', 'base64');
 const post = () => normalizePost({ ...demoRawPost(), file: { ...demoRawPost().file, url: 'https://static1.e621.net/data/original.png' },

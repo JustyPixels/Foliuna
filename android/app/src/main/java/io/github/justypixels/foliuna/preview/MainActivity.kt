@@ -21,6 +21,12 @@ class MainActivity : BridgeActivity() {
         internal var testExportDestination: android.net.Uri? = null
     }
     val services: Services by lazy { testServices ?: instance ?: synchronized(MainActivity::class.java) { instance ?: Services(applicationContext).also { instance = it } } }
+    internal fun immersive(enabled: Boolean) {
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+            systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            if (enabled) hide(androidx.core.view.WindowInsetsCompat.Type.systemBars()) else show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        }
+    }
     override fun onCreate(state: Bundle?) {
         registerPlugin(DisabledHttp::class.java); registerPlugin(DisabledCookies::class.java); registerPlugin(DisabledWebView::class.java); registerPlugin(FoliunaPlugin::class.java)
         super.onCreate(state)

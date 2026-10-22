@@ -28,7 +28,6 @@ export class PostMedia {
   constructor(private readonly fetcher: typeof fetch = publicFetch) {}
 
   register(post: Post): Post {
-    if (post.previewUrl?.match(/^\/demo\/(fox|wolf|deer)\.svg$/)) return post;
     const key = `${post.provider}/${post.id}`;
     const urls = { preview: post.unavailable ? null : imageMediaUrl(post.previewUrl, post.source),
       sample: post.unavailable ? null : imageMediaUrl(post.sampleUrl, post.source), original: post.unavailable ? null : mediaUrl(post.originalUrl, post.source) };

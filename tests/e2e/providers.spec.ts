@@ -7,7 +7,7 @@ test.use({ trace: 'off' });
 test('multiple boorus: previews/viewer, custom connection, encrypted Rule34 credentials, portable download and restart', async () => {
   test.setTimeout(90000);
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-boorus-')); const root = join(profile, 'archive'); mkdirSync(root);
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_DEMO: '0', FOLIUNA_FIXTURE_PROVIDERS: '1' };
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_FIXTURE_PROVIDERS: '1' };
   delete env.ELECTRON_RUN_AS_NODE;
   let app = await electron.launch({ args: [resolve('tests/fixtures/media-app.cjs')], env });
   try {
@@ -43,7 +43,7 @@ test('multiple boorus: previews/viewer, custom connection, encrypted Rule34 cred
     await page.getByLabel('Booru source').selectOption(custom.id); await page.getByRole('button', { name: 'Search', exact: true }).click();
     await page.getByRole('button', { name: 'View post 1001' }).click();
     await page.getByRole('button', { name: 'Download original', exact: true }).click();
-    await expect(page.getByText(/Saved to archive with tags and source metadata/).first()).toBeVisible();
+    await expect(page.locator('.details-page').getByText(/Saved to archive with tags and source metadata/)).toBeVisible();
     await page.getByRole('button', { name: 'Close post details' }).click();
     await page.getByLabel('Booru source').selectOption('rule34'); await page.getByRole('button', { name: 'Search', exact: true }).click();
     await expect(page.getByRole('alert')).toContainText('numeric user ID');
@@ -57,7 +57,7 @@ test('multiple boorus: previews/viewer, custom connection, encrypted Rule34 cred
     expect(hits.some((hit) => hit.host === 'custom.booru.org' && hit.authorization && !hit.hasKey)).toBe(true);
     expect(hits.some((hit) => hit.host === 'api.rule34.xxx' && hit.hasKey && hit.userId === '123' && !hit.authorization)).toBe(true);
     expect(await app.evaluate(() => (globalThis as unknown as { __foliunaMediaHits: { authenticated: boolean; query?: boolean }[] }).__foliunaMediaHits.every((hit) => !hit.authenticated && !hit.query))).toBe(true);
-    expect(errors).toEqual([]); await page.screenshot({ path: 'docs/screenshots/providers.png' });
+    expect(errors).toEqual([]); await page.screenshot({ path: 'test-results/screenshots/providers.png' });
     await app.close(); app = await electron.launch({ args: [resolve('tests/fixtures/media-app.cjs')], env }); page = await app.firstWindow();
     await expect(page.getByLabel('Booru source').locator(`option[value="${custom.id}"]`)).toHaveCount(1);
     await page.getByRole('button', { name: 'Settings', exact: true }).click(); await page.getByLabel('Connection', { exact: true }).selectOption(custom.id);
@@ -66,7 +66,7 @@ test('multiple boorus: previews/viewer, custom connection, encrypted Rule34 cred
     expect(existsSync(join(profile, `${custom.id}.credentials.enc`))).toBe(false);
     await page.getByRole('button', { name: 'Close settings' }).click(); await page.getByRole('button', { name: 'Gallery', exact: true }).click();
     await page.getByRole('button', { name: 'View post 1001' }).click();
-    await expect(page.getByRole('dialog')).toContainText('fixture_artist');
+    await expect(page.locator('.details-page')).toContainText('fixture_artist');
     await expect.poll(() => page.locator('.detail-preview img').evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
     await app.evaluate(({ shell }) => { shell.openExternal = async (url) => { (globalThis as unknown as { __foliunaSourceLink: string }).__foliunaSourceLink = url; }; });
     await page.getByRole('button', { name: 'Open source post ↗' }).click();

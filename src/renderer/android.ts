@@ -8,6 +8,7 @@ const native = registerPlugin<NativeApi>('Foliuna');
 // Keep this explicit: no arbitrary native method or generic fetch capability.
 export async function initializeAndroid() {
   const api: FoliunaApi = {
+    setFullscreen: (input) => native.setFullscreen({ input }), windowAction: (input) => native.windowAction({ input }),
     platform: () => native.platform(), exportLibrary: () => native.exportLibrary(),
     search: (input) => native.search({ input }), getPost: (input) => native.getPost({ input }),
     libraryStatus: () => native.libraryStatus(), openPost: (input) => native.openPost({ input }),
@@ -35,7 +36,7 @@ export async function initializeAndroid() {
   await App.addListener('backButton', () => {
     const dialogs = [...document.querySelectorAll<HTMLDialogElement>('dialog[open]')];
     const dialog = dialogs[dialogs.length - 1];
-    if (dialog) { dialog.dispatchEvent(new Event('cancel', { bubbles: false, cancelable: true })); return; }
+    if (dialog) { dialog.dispatchEvent(new Event('cancel', { bubbles: true, cancelable: true })); return; }
     const event = new Event('foliuna-back', { cancelable: true });
     if (window.dispatchEvent(event)) void App.exitApp();
   });

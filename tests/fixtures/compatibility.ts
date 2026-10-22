@@ -1,6 +1,6 @@
 import { BUILTIN_PROVIDERS } from '../../src/shared/providers';
 import { customProvider } from '../../src/main/providers';
-import { demoRawPost } from '../../src/main/adapters/demo';
+import { demoRawPost } from './posts';
 import { compatibleMetadata } from '../../src/main/adapters/compatible';
 import { normalizePost } from '../../src/main/adapters/e621';
 

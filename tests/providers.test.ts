@@ -148,13 +148,12 @@ describe('compatible JSON adapters', () => {
   });
   it('passes new source capabilities through validated IPC and updates credentials separately', async () => {
     const root = await mkdtemp(join(tmpdir(), 'foliuna-provider-ipc-'));
-    const library = new ArchiveLibrary(root, {}, false);
+    const library = new ArchiveLibrary(root, {});
     try {
       const store = new ProviderStore(root); await store.initialize();
       const credentials = new CredentialStore(root, { available: async () => true, encrypt: async (value) => Buffer.from(value), decrypt: async (value) => value.toString() });
       const refreshProviders = vi.fn();
-      const handlers = actions({ adapters: {}, providers: store, refreshProviders, library, credentials, client: new ApiClient(vi.fn()), demo: false,
-        openExternal: vi.fn(), selectDirectory: async () => null });
+      const handlers = actions({ adapters: {}, providers: store, refreshProviders, library, credentials, client: new ApiClient(vi.fn()), openExternal: vi.fn(), selectDirectory: async () => null });
       expect((await handlers[CHANNELS.saveProvider](definition)).id).toBe(definition.id);
       expect(refreshProviders).toHaveBeenCalledTimes(1);
       await handlers[CHANNELS.saveCredentials]({ provider: definition.id, username: 'test_user', apiKey: 'FICTIONAL' });
@@ -173,7 +172,7 @@ describe('portable multi-booru archives', () => {
     const metadata = compatibleMetadata({ ...raw, api_key: 'NEVER_STORE_THIS', file_url: 'https://cdn.booru.org/image.png' }, definition);
     const post = normalizePost(metadata, definition.id);
     const mediaFetch = vi.fn<typeof fetch>(async () => new Response(png, { headers: { 'content-type': 'image/png' } }));
-    let library = new ArchiveLibrary(profile, { [definition.id]: { search: vi.fn(), getPost: async () => post, getSnapshot: async () => ({ post, metadata }) } }, false, mediaFetch);
+    let library = new ArchiveLibrary(profile, { [definition.id]: { search: vi.fn(), getPost: async () => post, getSnapshot: async () => ({ post, metadata }) } }, mediaFetch);
     try {
       await library.select(root); const result = await library.download({ provider: definition.id, id: 42 });
       const sidecar = JSON.parse(await readFile(join(root, `${result.relativePath}.foliuna.json`), 'utf8'));
@@ -187,14 +186,14 @@ describe('portable multi-booru archives', () => {
       expect(db.prepare('SELECT * FROM source_posts').all()).toEqual(original); expect(db.prepare('SELECT * FROM source_snapshots').all()).toEqual(captures);
       expect(db.prepare('SELECT count(*) n FROM post_tags').get()!.n).toBe(2); expect(db.prepare('PRAGMA foreign_key_check').all()).toEqual([]); db.close();
       for (const suffix of ['', '-wal', '-shm']) await rm(`${dbPath}${suffix}`, { force: true });
-      library = new ArchiveLibrary(profile, {}, false, vi.fn()); await library.select(root); const gallery = new Gallery(library);
+      library = new ArchiveLibrary(profile, {}, vi.fn()); await library.select(root); const gallery = new Gallery(library);
       expect((await gallery.importSidecars()).imported).toBe(1);
       const posts = (await gallery.search({ tags: `provider:${definition.id} artist:artist_one`, safeOnly: true, page: 1 })).posts;
       expect(posts).toHaveLength(1); expect(posts[0].originalUrl).toBe(`foliuna://app/gallery/${result.sha256}/original`);
       expect(posts[0].source?.baseUrl).toBe(definition.baseUrl); expect((await gallery.reconcile()).invalid).toBe(0);
       const openExternal = vi.fn();
       const handlers = actions({ adapters: {}, library, credentials: new CredentialStore(profile, { available: async () => false, encrypt: vi.fn(), decrypt: vi.fn() }),
-        client: new ApiClient(vi.fn()), demo: false, openExternal, selectDirectory: async () => null });
+        client: new ApiClient(vi.fn()), openExternal, selectDirectory: async () => null });
       await handlers[CHANNELS.openPost]({ provider: definition.id, id: 42, archiveSha: result.sha256 });
       expect(openExternal).toHaveBeenCalledWith('https://custom.booru.org/posts/42');
     } finally { await library.close(); await rm(profile, { recursive: true, force: true }); }

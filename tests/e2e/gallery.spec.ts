@@ -7,7 +7,7 @@ test('offline gallery: restore sidecars, local tags/images/video/Flash, cached t
   test.setTimeout(60000);
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-offline-'));
   const root = join(profile, 'archive');
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_DEMO: '0', FOLIUNA_FIXTURE_BROWSING: '1', FOLIUNA_FIXTURE_OFFLINE: '1' }; delete env.ELECTRON_RUN_AS_NODE;
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_FIXTURE_BROWSING: '1', FOLIUNA_FIXTURE_OFFLINE: '1' }; delete env.ELECTRON_RUN_AS_NODE;
   let app = await electron.launch({ args: ['tests/fixtures/media-app.cjs'], env });
   try {
     let page = await app.firstWindow();
@@ -34,7 +34,7 @@ test('offline gallery: restore sidecars, local tags/images/video/Flash, cached t
     const viewer = app.windows().find((item) => item !== page)!;
     await expect.poll(() => viewer.getByAltText('Post 1001').evaluate((node) => (node as HTMLImageElement).naturalHeight)).toBe(720);
     expect(await viewer.evaluate(() => typeof (window as unknown as { foliuna?: unknown }).foliuna)).toBe('undefined');
-    await viewer.getByRole('button', { name: 'Close window' }).click(); await expect(page.getByRole('dialog', { name: 'Post #1001' })).toBeVisible();
+    await viewer.getByRole('button', { name: 'Close window' }).click(); await expect(page.getByRole('region', { name: 'Post #1001' })).toBeVisible();
     await page.getByRole('button', { name: 'Close post details' }).click();
     await expect.poll(() => existsSync(join(root, '.foliuna', 'thumbnails', `${hash}.png`))).toBe(true);
     const card = page.getByRole('button', { name: 'View post 1001' }); await card.scrollIntoViewIfNeeded();
@@ -47,7 +47,7 @@ test('offline gallery: restore sidecars, local tags/images/video/Flash, cached t
       const context = canvas.getContext('2d')!; context.drawImage(node as HTMLImageElement, 0, 0, 1, 1);
       return [...context.getImageData(0, 0, 1, 1).data];
     })).toEqual([180, 140, 90, 255]);
-    await page.screenshot({ path: 'docs/screenshots/gallery.png' });
+    await page.screenshot({ path: 'test-results/screenshots/gallery.png' });
     for (const id of [1003, 1004, 1005]) {
       await page.getByLabel('SEARCH TAGS').fill(`id:${id}`); await page.getByRole('button', { name: 'Search', exact: true }).click();
       await page.getByRole('button', { name: `View post ${id}` }).click();

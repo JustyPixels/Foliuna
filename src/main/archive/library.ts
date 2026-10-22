@@ -91,11 +91,11 @@ export class ArchiveLibrary {
   private closing = false;
   private readonly reads = new Set<Promise<unknown>>();
   constructor(private readonly profile: string, private readonly adapters: Partial<Record<Provider, BooruAdapter>>,
-    private readonly demo: boolean, private readonly fetcher: typeof fetch = publicFetch) {}
+    private readonly fetcher: typeof fetch = publicFetch) {}
 
   status(): LibraryStatus {
     return { assets: this.library ? Number(this.library.db.prepare('SELECT count(*) AS count FROM assets').get()!.count) : 0,
-      schemaVersion: 3, demo: this.demo, root: this.library?.root ?? null, issue: this.issue };
+      schemaVersion: 3, root: this.library?.root ?? null, issue: this.issue };
   }
 
   async initialize() {
@@ -172,7 +172,6 @@ export class ArchiveLibrary {
 
   async download(input: PostRequest): Promise<ArchiveResult> {
     const request = postRequest(input);
-    if (this.demo) throw new AppError('DEMO', 'Demo posts have no original media. Use live mode to archive a real post.');
     if (!this.library) throw new AppError('LIBRARY_REQUIRED', 'Choose your archive folder in Settings first.');
     if (this.closing || this.controller || this.changing) throw new AppError('BUSY', 'Another download or library change is in progress.');
     const controller = new AbortController();

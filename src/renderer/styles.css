@@ -197,10 +197,7 @@ button:hover:enabled {
   letter-spacing:1.2px;
   color:#c6d9b3
 }
-.mode-badge.demo {
-  color:#c8bc8d;
-  border-color:#514b33
-}
+
 .library-state {
   font-size:10px;
   color:#849987
@@ -247,21 +244,8 @@ h1>span {
   transform:rotate(14deg);
   margin-right:10px
 }
-.demo-banner {
-  margin-bottom:18px;
-  border:1px solid #464633;
-  background:#24281e;
-  border-radius:8px;
-  padding:12px 15px;
-  color:#b9b89c;
-  font-size:11px;
-  line-height:1.7
-}
-.demo-banner strong {
-  color:#d9d5b3;
-  font-weight:500;
-  margin-right:6px
-}
+
+
 .search-panel {
   background:var(--panel);
   border:1px solid var(--border);
@@ -607,7 +591,7 @@ h1>span {
   margin-left:10px;
   padding:5px 10px
 }
-.details-dialog {
+.settings-dialog {
   width:min(1100px,94vw);
   max-height:90vh;
   padding:0;
@@ -616,7 +600,7 @@ h1>span {
   background:var(--bg);
   color:var(--text)
 }
-.details-dialog::backdrop {
+.settings-dialog::backdrop {
   background:#060e0bc9;
   backdrop-filter:blur(6px)
 }
@@ -671,6 +655,10 @@ h1>span {
 .viewer-controls select { border:1px solid var(--border); background:var(--panel); color:var(--text); border-radius:7px; padding:8px 12px; }
 .media-frame { position:relative; display:grid; place-items:center; width:100%; min-width:0; min-height:inherit; }
 .post-image .media-frame { position:absolute; inset:0; height:100%; }
+@supports not (aspect-ratio: 1) {
+  .post-image::before { content:""; display:block; padding-bottom:var(--image-padding,81.3%); }
+  .post-image .media-frame, .post-image img, .post-image video { top:0; right:0; bottom:0; left:0; }
+}
 .media-status { display:flex; flex-direction:column; align-items:center; gap:12px; padding:30px; font-size:12px; color:var(--muted); text-align:center; }
 .media-status button { padding:6px 10px; }
 .media-frame:has(img) .media-status { position:absolute; inset:0; justify-content:center; pointer-events:none; }
@@ -829,7 +817,7 @@ dd {
   .detail-preview {
     min-height:230px
   }
-  .details-dialog {
+  .settings-dialog {
     max-width:740px
   }
 }

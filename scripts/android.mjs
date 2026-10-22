@@ -24,7 +24,7 @@ writeFileSync('android/local.properties', 'sdk.dir=' + sdk.replaceAll('\\', '/')
 run(windows ? 'android/gradlew.bat' : './android/gradlew', ['-p', 'android', task === 'test' ? ':app:connectedDebugAndroidTest' : task === 'lint' ? ':app:lintDebug' : ':app:assembleDebug', '--console=plain']);
 if (task === 'build') {
   mkdirSync('release/android', { recursive: true });
-  const name = 'Foliuna-Android-0.1.0-preview.1-debug.apk';
+  const name = 'Foliuna-Android-0.1.0-preview.2-debug.apk';
   copyFileSync('android/app/build/outputs/apk/debug/app-debug.apk', 'release/android/' + name);
   const digest = createHash('sha256').update(readFileSync('release/android/' + name)).digest('hex');
   writeFileSync('release/android/SHA256SUMS.txt', digest + '  ' + name + '\n');

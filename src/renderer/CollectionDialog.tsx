@@ -24,7 +24,7 @@ export function CollectionDialog({ post, onClose, onChanged }: { post: Post; onC
     } catch { setError('Could not update membership. Your original files were preserved.'); }
     finally { setBusy(false); }
   }
-  return <dialog ref={ref} className="details-dialog settings-dialog" aria-labelledby="collect-title" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}><div className="details-content">
+  return <dialog ref={ref} className="settings-dialog" aria-labelledby="collect-title" onCancel={(event) => { event.preventDefault(); if (!busy) onClose(); }}><div className="details-content">
     <header><div><p className="eyebrow">SAVED MEDIA</p><h2 id="collect-title">Collections for post #{post.id}</h2></div><button className="close-button" aria-label="Close collections" disabled={busy} onClick={onClose}>×</button></header>
     <p>Choose where to keep this saved item.</p>
     {loading && <p role="status">Loading collections…</p>}

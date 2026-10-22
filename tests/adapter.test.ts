@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClient, USER_AGENT } from '../src/main/adapters/http';
 import { E621Adapter, normalizePost } from '../src/main/adapters/e621';
-import { DemoAdapter, demoRawPost } from '../src/main/adapters/demo';
+import { DemoAdapter, demoRawPost } from './fixtures/posts';
 import { PAGE_SIZE } from '../src/shared/contracts';
 
 const json = (value: unknown, status = 200, extra: Record<string, string> = {}) => new Response(JSON.stringify(value), {

@@ -83,7 +83,7 @@ class Archive(val root: File, private val snapshot: (String, Long) -> Snapshot, 
         db = Database(File(storage, "library.sqlite"))
         try { recover() } catch (error: Exception) { issue = (error as? Failure)?.message ?: "Archive recovery could not complete. Export a backup before reinstalling." }
     }
-    fun status() = j("assets" to db.rows("SELECT count(*) AS n FROM assets").first().getLong("n"), "schemaVersion" to 3, "demo" to false, "root" to "On this Android device", "issue" to issue)
+    fun status() = j("assets" to db.rows("SELECT count(*) AS n FROM assets").first().getLong("n"), "schemaVersion" to 3, "root" to "On this Android device", "issue" to issue)
     fun <T> maintain(action: () -> T): T {
         if (!operation.tryLock()) fail("BUSY", "Wait for the current archive operation.")
         busy = true

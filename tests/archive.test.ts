@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { realpath } from 'node:fs/promises';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArchiveLibrary } from '../src/main/archive/library';
-import { demoRawPost } from '../src/main/adapters/demo';
+import { demoRawPost } from './fixtures/posts';
 import { normalizePost } from '../src/main/adapters/e621';
 import type { BooruAdapter } from '../src/main/adapters/types';
 import type { Provider } from '../src/shared/contracts';
@@ -54,7 +54,7 @@ function adapter(site: Provider): BooruAdapter {
     }),
   };
 }
-async function library(demo = false) {
+async function library() {
   const profile = await mkdtemp(join(testRoot, 'profile-'));
   const root = await mkdtemp(join(testRoot, 'archive-'));
   const adapters = { e621: adapter('e621'), e926: adapter('e926') };
@@ -63,7 +63,7 @@ async function library(demo = false) {
     // Only tests remap the validated CDN request onto a real local fixture server.
     return fetch(localUrl, options);
   };
-  const service = new ArchiveLibrary(profile, adapters, demo, fetcher); libraries.push(service);
+  const service = new ArchiveLibrary(profile, adapters, fetcher); libraries.push(service);
   return { service, profile, root, adapters, fetcher };
 }
 async function inspect(root: string, query: string) {
@@ -86,13 +86,11 @@ afterEach(async () => {
 });
 
 describe('explicit original archiving', () => {
-  it('requires an explicit command and a chosen library, and never downloads demo originals', async () => {
+  it('requires an explicit command and a chosen library,', async () => {
     const { service, root, adapters } = await library();
     await expect(service.download({ provider: 'e926', id: 1001 })).rejects.toMatchObject({ code: 'LIBRARY_REQUIRED' });
     await service.select(root);
     expect(adapters.e926.getSnapshot).not.toHaveBeenCalled(); expect(calls).toEqual([]);
-    const demo = await library(true); await demo.service.select(demo.root);
-    await expect(demo.service.download({ provider: 'e926', id: 1001 })).rejects.toMatchObject({ code: 'DEMO' });
   });
   it('streams and verifies original bytes, persists categorized provenance, deduplicates across providers, and retains snapshot history', async () => {
     const { service, root } = await library(); await service.select(root);
@@ -215,7 +213,7 @@ describe('archive recovery and no-overwrite behavior', () => {
     await expect(service.download({ provider: 'e621', id: 1001 })).rejects.toMatchObject({ code: 'RECOVERY' });
     expect((await inspect(root, 'SELECT count(*) AS count FROM source_snapshots'))[0].count).toBe(1);
     await service.close(); await rm(target, { recursive: true });
-    const reopened = new ArchiveLibrary(profile, adapters, false, fetcher); libraries.push(reopened); await reopened.initialize();
+    const reopened = new ArchiveLibrary(profile, adapters, fetcher); libraries.push(reopened); await reopened.initialize();
     expect(reopened.status()).toMatchObject({ assets: 1, issue: null });
     expect(JSON.parse(await readFile(target, 'utf8')).sources[0].snapshots).toHaveLength(1);
     expect((await inspect(root, 'SELECT count(*) AS count FROM source_snapshots'))[0].count).toBe(1);

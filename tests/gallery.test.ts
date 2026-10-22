@@ -10,7 +10,7 @@ import { parseSidecar } from '../src/main/archive/import';
 import { publishNoReplace } from '../src/main/archive/publication';
 import { sidecar } from '../src/main/archive/metadata';
 import { normalizePost } from '../src/main/adapters/e621';
-import { demoRawPost } from '../src/main/adapters/demo';
+import { demoRawPost } from './fixtures/posts';
 import { openLibrary } from '../src/main/database';
 import type { Provider } from '../src/shared/contracts';
 
@@ -31,7 +31,7 @@ async function incoming(sources = [source()], bytes = png, folder = 'incoming') 
 const query = (tags = '', safeOnly = true, page = 1) => ({ tags, safeOnly, page });
 beforeEach(async () => {
   profile = await mkdtemp(join(tmpdir(), 'foliuna-gallery-')); root = join(profile, 'archive'); await mkdir(root);
-  library = new ArchiveLibrary(profile, {}, false, vi.fn()); await library.select(root); gallery = new Gallery(library);
+  library = new ArchiveLibrary(profile, {}, vi.fn()); await library.select(root); gallery = new Gallery(library);
 });
 afterEach(async () => { await library.close(); await rm(profile, { recursive: true, force: true }); });
 
@@ -68,7 +68,7 @@ describe('offline index and query grammar', () => {
     await library.close();
     const moved = join(profile, 'moved-archive'); await rename(root, moved); root = moved;
     for (const suffix of ['', '-wal', '-shm']) await rm(join(root, '.foliuna', `library.sqlite${suffix}`), { force: true });
-    library = new ArchiveLibrary(profile, {}, false); await library.select(root); gallery = new Gallery(library);
+    library = new ArchiveLibrary(profile, {}); await library.select(root); gallery = new Gallery(library);
     expect(library.status().assets).toBe(0); await gallery.importSidecars(); expect(library.status().assets).toBe(26);
     expect((await gallery.search(query('', true, 2))).posts).toHaveLength(2);
   });

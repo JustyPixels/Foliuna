@@ -5,7 +5,7 @@ import { join } from 'node:path';
 
 test('browsing: detail navigation, layouts, tag actions/suggestions, infinite loading, account and saved preferences', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-browsing-'));
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_DEMO: '0', FOLIUNA_FIXTURE_BROWSING: '1' };
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_FIXTURE_BROWSING: '1' };
   delete env.ELECTRON_RUN_AS_NODE;
   let app = await electron.launch({ args: ['tests/fixtures/media-app.cjs'], env });
   try {
@@ -22,10 +22,10 @@ test('browsing: detail navigation, layouts, tag actions/suggestions, infinite lo
     await page.getByRole('button', { name: 'View post 1001' }).click();
     await expect(page.getByRole('heading', { name: 'Categorized tags' })).toBeVisible();
     await page.getByRole('button', { name: 'Next post →' }).click();
-    await expect(page.getByRole('dialog', { name: 'Post #1002' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Post #1002' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Categorized tags' })).toBeVisible();
     await page.getByRole('button', { name: '← Previous post' }).click();
-    await expect(page.getByRole('dialog', { name: 'Post #1001' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Post #1001' })).toBeVisible();
     await page.getByRole('button', { name: 'Tag fixture_artist', exact: true }).click();
     await page.getByRole('menuitem', { name: 'Favorite tag', exact: true }).click();
     await page.getByRole('button', { name: 'Tag fixture_artist', exact: true }).click();
@@ -57,7 +57,7 @@ test('browsing: detail navigation, layouts, tag actions/suggestions, infinite lo
 
 test('media: actual video/GIF decoding, isolated Ruffle playback, resizable/fullscreen window and return to details', async () => {
   const profile = mkdtempSync(join(tmpdir(), 'foliuna-playback-'));
-  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_DEMO: '0', FOLIUNA_FIXTURE_BROWSING: '1' }; delete env.ELECTRON_RUN_AS_NODE;
+  const env: Record<string, string> = { ...process.env, FOLIUNA_DATA_DIR: profile, FOLIUNA_FIXTURE_BROWSING: '1' }; delete env.ELECTRON_RUN_AS_NODE;
   const app = await electron.launch({ args: ['tests/fixtures/media-app.cjs'], env });
   try {
     const page = await app.firstWindow();
@@ -67,10 +67,22 @@ test('media: actual video/GIF decoding, isolated Ruffle playback, resizable/full
     const video = page.getByLabel('Video of post 1003'); await expect(video).toHaveAttribute('preload', 'none');
     const hits = () => app.evaluate(() => (globalThis as unknown as { __foliunaMediaHits: { path: string; authenticated: boolean }[] }).__foliunaMediaHits);
     expect((await hits()).some((hit) => hit.path.endsWith('.webm'))).toBe(false);
-    await video.evaluate((node) => (node as HTMLVideoElement).play());
+    expect(await video.evaluate((node) => (node as HTMLVideoElement).controls)).toBe(false);
+    await page.getByRole('button', { name: 'Play video', exact: true }).click();
     await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).videoWidth)).toBe(160);
     await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0);
-    await video.evaluate((node) => { const v = node as HTMLVideoElement; v.pause(); v.currentTime = 0.5; });
+    await page.getByRole('button', { name: 'Pause video', exact: true }).click();
+    await page.getByRole('button', { name: 'Mute video', exact: true }).click();
+    await page.getByLabel('Playback speed').selectOption('0.5');
+    await page.getByLabel('Video position').fill('0.1');
+    await page.getByRole('button', { name: 'Fullscreen video', exact: true }).click();
+    const fullscreenVideo = page.getByRole('dialog', { name: 'Fullscreen media' }).locator('video');
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(true);
+    await expect.poll(() => fullscreenVideo.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBeCloseTo(0.1, 2);
+    expect(await fullscreenVideo.evaluate((node) => ({ muted: (node as HTMLVideoElement).muted, speed: (node as HTMLVideoElement).playbackRate, paused: (node as HTMLVideoElement).paused }))).toEqual({ muted: true, speed: 0.5, paused: true });
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('region', { name: 'Post #1003' })).toBeVisible();
+    await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBeCloseTo(0.1, 2);
     await page.getByRole('button', { name: 'Close post details' }).click();
     await page.getByRole('button', { name: 'View post 1005' }).click();
     const gif = page.getByAltText('Sample of post 1005'); await expect.poll(() => gif.evaluate((node) => (node as HTMLImageElement).naturalWidth)).toBe(32);
@@ -87,18 +99,34 @@ test('media: actual video/GIF decoding, isolated Ruffle playback, resizable/full
     await expect.poll(() => frame.locator('ruffle-player').evaluate((node) => (node as unknown as { ruffle(): { suspended: boolean } }).ruffle().suspended)).toBe(false);
     await page.getByRole('button', { name: 'Close post details' }).click();
     await page.getByRole('button', { name: 'View post 1001' }).click();
+    await page.getByRole('button', { name: 'Fullscreen', exact: true }).click();
+    await expect.poll(() => app.evaluate(({ BrowserWindow, screen }) => {
+      const win = BrowserWindow.getAllWindows()[0];
+      return { fullscreen: win.isFullScreen(), bounds: win.getBounds(), display: screen.getDisplayMatching(win.getBounds()).bounds };
+    })).toMatchObject({ fullscreen: true });
+    const bounds = await app.evaluate(({ BrowserWindow, screen }) => { const win = BrowserWindow.getAllWindows()[0]; return { window: win.getBounds(), display: screen.getDisplayMatching(win.getBounds()).bounds }; });
+    expect(bounds.window).toEqual(bounds.display);
+    await expect(page.locator('.window-titlebar')).toBeHidden();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('dialog', { name: 'Fullscreen media' })).toContainText('Post #1002');
+    await expect(page.getByAltText('Sample of post 1002')).toBeVisible();
+    await page.keyboard.press('ArrowLeft');
+    await expect(page.getByRole('dialog', { name: 'Fullscreen media' })).toContainText('Post #1001');
+    await page.keyboard.press('Escape');
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isFullScreen())).toBe(false);
+    await expect(page.getByRole('heading', { name: 'Categorized tags' })).toBeVisible();
     await page.getByRole('button', { name: 'Open media window ↗' }).click();
     await expect.poll(() => app.windows().length).toBe(2);
     const viewer = app.windows().find((item) => item !== page)!;
     await expect(viewer.getByAltText('Post 1001')).toBeVisible();
     expect(await viewer.evaluate(() => typeof (window as unknown as { foliuna?: unknown }).foliuna)).toBe('undefined');
     await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().includes('/viewer.html#'))!.setSize(720, 480));
-    await expect.poll(() => viewer.evaluate(() => window.outerWidth)).toBe(720);
+    await expect.poll(() => app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find((win) => win.webContents.getURL().includes('/viewer.html#'))!.getSize()[0])).toBe(720);
     await viewer.getByRole('button', { name: 'Fullscreen · F11' }).click();
     await expect.poll(() => viewer.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
     await viewer.keyboard.press('Escape');
     await viewer.getByRole('button', { name: 'Close window' }).click();
-    await expect.poll(() => app.windows().length).toBe(1); await expect(page.getByRole('dialog', { name: 'Post #1001' })).toBeVisible();
+    await expect.poll(() => app.windows().length).toBe(1); await expect(page.getByRole('region', { name: 'Post #1001' })).toBeVisible();
     expect(remote).toEqual([]); expect((await hits()).every((hit) => !hit.authenticated)).toBe(true);
     expect((await hits()).filter((hit) => hit.path.endsWith('.webm'))).toHaveLength(1);
   } finally { await app.close(); rmSync(profile, { recursive: true, force: true }); }

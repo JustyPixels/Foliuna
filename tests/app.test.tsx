@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../src/renderer/App';
-import { DemoAdapter } from '../src/main/adapters/demo';
+import { DemoAdapter } from './fixtures/posts';
 import type { FoliunaApi, Result, SearchResult } from '../src/shared/contracts';
 
 const demo = new DemoAdapter('e621');
@@ -17,18 +17,19 @@ beforeEach(() => {
   getPost.mockReset().mockImplementation(async (request) => ({ ok: true, value: await demo.getPost(request.id) }));
   window.foliuna = { search, getPost,
     platform: vi.fn(),
+    setFullscreen: vi.fn().mockResolvedValue({ok:true,value:null}), windowAction: vi.fn().mockResolvedValue({ok:true,value:null}),
     exportLibrary: vi.fn(),
-    libraryStatus: vi.fn().mockResolvedValue({ ok: true, value: { assets: 0, schemaVersion: 2, demo: true, root: null, issue: null } }),
+    libraryStatus: vi.fn().mockResolvedValue({ ok: true, value: { assets: 0, schemaVersion: 2, root: null, issue: null } }),
     openPost: vi.fn().mockResolvedValue({ ok: true, value: null }),
     getSettings: vi.fn().mockResolvedValue({ ok: true, value: { encryptionAvailable: true, credentials: [
       { provider: 'e621', saved: false, username: null, locked: false },
-    ], library: { assets: 0, schemaVersion: 2, demo: true, root: null, issue: null } } }),
+    ], library: { assets: 0, schemaVersion: 2, root: null, issue: null } } }),
     saveCredentials: vi.fn().mockResolvedValue({ ok: true, value: { provider: 'e621', saved: true, username: 'test_user', locked: false } }),
     removeCredentials: vi.fn().mockResolvedValue({ ok: true, value: null }),
     saveProvider: vi.fn(),
     removeProvider: vi.fn().mockResolvedValue({ ok: true, value: null }),
     testConnection: vi.fn().mockResolvedValue({ ok: true, value: null }),
-    chooseLibrary: vi.fn().mockResolvedValue({ ok: true, value: { assets: 0, schemaVersion: 2, demo: true, root: null, issue: null } }),
+    chooseLibrary: vi.fn().mockResolvedValue({ ok: true, value: { assets: 0, schemaVersion: 2, root: null, issue: null } }),
     downloadPost: vi.fn().mockResolvedValue({ ok: true, value: { sha256: 'a'.repeat(64), duplicate: false, relativePath: 'media/a.png' } }),
     cancelDownload: vi.fn().mockResolvedValue({ ok: true, value: null }),
     getPreferences: vi.fn().mockResolvedValue({ ok: true, value: { gridMode: 'natural', browsing: 'pages', favoriteTags: [] } }),
@@ -50,7 +51,7 @@ beforeEach(() => {
   };
 });
 afterEach(cleanup);
-async function ready() { render(<App />); await screen.findByText('LOCAL DEMO'); return userEvent.setup(); }
+async function ready() { render(<App />); await screen.findByText('LIVE SEARCH'); return userEvent.setup(); }
 async function findForest(user: ReturnType<typeof userEvent.setup>) {
   await user.type(screen.getByLabelText('SEARCH TAGS'), 'forest');
   await user.click(screen.getByRole('button', { name: 'Search' }));
@@ -116,11 +117,11 @@ describe('search interface', () => {
     const post = await demo.getPost(1001);
     getPost.mockResolvedValueOnce({ ok: true, value: { ...post, description: '<script>window.compromised=true</script>' } });
     await user.click(screen.getByRole('button', { name: 'View post 1001' }));
-    expect(await screen.findByRole('dialog', { name: 'Post #1001' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Post #1001' })).toBeInTheDocument();
     await screen.findByText('Categorized tags');
     expect(screen.getByText('<script>window.compromised=true</script>')).toBeInTheDocument();
-    expect(document.querySelector('dialog script')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Fictional demo post' })).toBeDisabled();
+    expect(document.querySelector('.details-page script')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Open source post ↗' })).toBeEnabled();
     expect(getPost).toHaveBeenCalledWith({ provider: 'e621', id: 1001 });
     await user.click(screen.getByRole('button', { name: 'Close post details' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -144,7 +145,7 @@ describe('search interface', () => {
     getPost.mockResolvedValueOnce({ ok: true, value: { ...await demo.getPost(1001), rating: 'e' } });
     await user.click(screen.getByRole('button', { name: 'View post 1001' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('no longer rated safe');
-    expect(document.querySelector('dialog img')).toBeNull();
+    expect(document.querySelector('.details-page img')).toBeNull();
   });
 });
 
@@ -181,7 +182,7 @@ describe('settings and explicit archive actions', () => {
     const user = await ready();
     const original = await window.foliuna.getSettings(); if (!original.ok) throw new Error();
     vi.mocked(window.foliuna.getSettings).mockResolvedValue({ ok: true, value: { ...original.value,
-      library: { ...original.value.library, demo: false },
+      library: { ...original.value.library, },
       credentials: [{ provider: 'e621', saved: true, username: 'fixture_user', locked: false }],
     } });
     vi.mocked(window.foliuna.testConnection).mockResolvedValueOnce({ ok: false, error: { code: 'HTTP_403', message: 'The provider denied access (HTTP 403).' } });
@@ -197,7 +198,7 @@ describe('settings and explicit archive actions', () => {
   });
   it('downloads only after a click and refreshes the library count on completion', async () => {
     const original = await window.foliuna.libraryStatus(); if (!original.ok) throw new Error();
-    vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok: true, value: { ...original.value, demo: false, root: 'C:/fixture-archive' } });
+    vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok: true, value: { ...original.value, root: 'C:/fixture-archive' } });
     const user = await readyLive();
     await findForest(user);
     const post = await demo.getPost(1001);
@@ -212,7 +213,7 @@ describe('settings and explicit archive actions', () => {
   });
   it('sends cancellation for a pending transfer and surfaces download failures', async () => {
     const original = await window.foliuna.libraryStatus(); if (!original.ok) throw new Error();
-    vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok: true, value: { ...original.value, demo: false, root: 'C:/fixture-archive' } });
+    vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok: true, value: { ...original.value, root: 'C:/fixture-archive' } });
     const user = await readyLive(); await findForest(user);
     const post = await demo.getPost(1001);
     getPost.mockResolvedValueOnce({ ok: true, value: { ...post, file: { ...post.file, url: 'https://static1.e621.net/data/original.png' } } });
@@ -249,16 +250,34 @@ describe('settings and explicit archive actions', () => {
 async function readyLive() { render(<App />); await screen.findByText('LIVE SEARCH'); return userEvent.setup(); }
 
 describe('extended browsing controls', () => {
+  it('uses system fullscreen, navigates posts without leaving it, and returns to full-page details', async () => {
+    const user = await ready(); await findForest(user);
+    await user.click(screen.getByRole('button', { name: 'View post 1001' })); await screen.findByText('Categorized tags');
+    expect(screen.getByRole('region', { name: 'Post #1001' })).not.toHaveAttribute('open');
+    await user.click(screen.getByRole('button', { name: 'Fullscreen' }));
+    expect(window.foliuna.setFullscreen).toHaveBeenLastCalledWith(true);
+    const viewer = screen.getByRole('dialog', { name: 'Fullscreen media' });
+    await user.keyboard('{ArrowRight}'); await screen.findByRole('region', { name: 'Post #1002' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next post' })).toBeEnabled());
+    expect(screen.getByRole('dialog', { name: 'Fullscreen media' })).toBe(viewer);
+    expect(window.foliuna.setFullscreen).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Zoom' }));
+    expect(screen.getByLabelText('Image zoom')).toHaveValue('2');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Post #1002' })).toBeInTheDocument();
+    expect(window.foliuna.setFullscreen).toHaveBeenLastCalledWith(false);
+  });
   it('keeps one dialog open across posts and fetches the next page at the boundary', async () => {
     const user = await ready(); await findForest(user);
     await user.click(screen.getByRole('button', { name: 'View post 1024' }));
-    const dialog = await screen.findByRole('dialog', { name: 'Post #1024' }); await screen.findByText('Categorized tags');
+    const dialog = await screen.findByRole('region', { name: 'Post #1024' }); await screen.findByText('Categorized tags');
     await user.click(screen.getByRole('button', { name: 'Next post →' }));
-    expect(await screen.findByRole('dialog', { name: 'Post #1025' })).toBe(dialog);
+    expect(await screen.findByRole('region', { name: 'Post #1025' })).toBe(dialog);
     expect(search).toHaveBeenLastCalledWith({ provider: 'e621', tags: 'forest', page: 2, safeOnly: true });
     await screen.findByText('Categorized tags');
     await user.click(screen.getByRole('button', { name: '← Previous post' }));
-    expect(await screen.findByRole('dialog', { name: 'Post #1024' })).toBe(dialog);
+    expect(await screen.findByRole('region', { name: 'Post #1024' })).toBe(dialog);
   });
   it('appends once in infinite mode, keeps failed loads retryable, and retains the submitted query', async () => {
     vi.mocked(window.foliuna.getPreferences).mockResolvedValue({ ok: true, value: { gridMode: 'crop', browsing: 'infinite', favoriteTags: [] } });
@@ -330,7 +349,7 @@ it('uses numeric API user IDs for Rule34 and clears transient keys when changing
 });
 
 it('keeps collection scope through filters and pagination and clears it when returning to Gallery', async () => {
-  vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok:true, value:{assets:2,schemaVersion:3,demo:true,root:'C:/fixture',issue:null} });
+  vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ ok:true, value:{assets:2,schemaVersion:3,root:'C:/fixture',issue:null} });
   vi.mocked(window.foliuna.collectionList).mockResolvedValue({ok:true,value:[{id:1,name:'Favorites',assets:2,pending:0}]});
   vi.mocked(window.foliuna.gallerySearch).mockImplementation(async (request)=>({ok:true,value:{posts:[],page:request.page,hasMore:request.page===1}}));
   const user=await ready(); await user.click(screen.getByRole('button',{name:'Collections'}));
@@ -345,7 +364,7 @@ it('keeps collection scope through filters and pagination and clears it when ret
 
 it('adds archived media to collections and leaves membership unchanged on a save failure', async () => {
   const post={...await demo.getPost(1001),archive:{sha256:'a'.repeat(64),capturedAt:'2026-10-16',sourceCount:1,missing:false,provenance:[{provider:'e621',id:1001}]}};
-  vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ok:true,value:{assets:1,schemaVersion:3,demo:true,root:'C:/fixture',issue:null}});
+  vi.mocked(window.foliuna.libraryStatus).mockResolvedValue({ok:true,value:{assets:1,schemaVersion:3,root:'C:/fixture',issue:null}});
   vi.mocked(window.foliuna.gallerySearch).mockResolvedValue({ok:true,value:{posts:[post],page:1,hasMore:false}});
   vi.mocked(window.foliuna.galleryPost).mockResolvedValue({ok:true,value:post});
   vi.mocked(window.foliuna.collectionList).mockResolvedValue({ok:true,value:[{id:1,name:'Favorites',assets:0,pending:0,contains:false}]});
@@ -356,6 +375,6 @@ it('adds archived media to collections and leaves membership unchanged on a save
   expect(await screen.findByRole('alert')).toHaveTextContent('Not saved'); expect(checkbox).not.toBeChecked();
   await user.click(checkbox);await waitFor(()=>expect(checkbox).toBeChecked());
   expect(window.foliuna.collectionMembership).toHaveBeenLastCalledWith({id:1,sha256:'a'.repeat(64),present:true});
-  await user.click(screen.getByRole('button',{name:'Done'})); expect(screen.getByRole('dialog',{name:'Post #1001'})).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Done'})); expect(screen.getByRole('region',{name:'Post #1001'})).toBeInTheDocument();
   expect(window.foliuna.downloadPost).not.toHaveBeenCalled(); expect(search).not.toHaveBeenCalled();
 });

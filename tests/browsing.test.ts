@@ -8,7 +8,7 @@ import { ApiClient } from '../src/main/adapters/http';
 import { actions } from '../src/main/ipc';
 import { CredentialStore } from '../src/main/credentials';
 import { ArchiveLibrary } from '../src/main/archive/library';
-import { DemoAdapter } from '../src/main/adapters/demo';
+import { DemoAdapter } from './fixtures/posts';
 import { mediaSignature, MAX_MEDIA_BYTES } from '../src/main/media-formats';
 import { bundlePath, CSP, PLAYER_CSP } from '../src/main/security';
 
@@ -60,7 +60,7 @@ describe('tag/account/viewer capabilities', () => {
   it('uses bounded tag queries and returns only approved account fields, with fictional credentials', async () => {
     const profile = await mkdtemp(join(tmpdir(), 'foliuna-browse-ipc-'));
     const adapter = new DemoAdapter('e621');
-    const library = new ArchiveLibrary(profile, { e621: adapter }, false);
+    const library = new ArchiveLibrary(profile, { e621: adapter });
     const vault = new Map<string, string>();
     const credentials = new CredentialStore(profile, { available: async () => true,
       encrypt: async (value) => { vault.set('opaque', value); return Buffer.from('opaque'); }, decrypt: async () => vault.get('opaque')! });
@@ -68,8 +68,13 @@ describe('tag/account/viewer capabilities', () => {
       json({ id: 123, name: 'fixture', level_string: 'Member', favorite_count: 4, post_upload_count: 2, created_at: '2020-01-01', favorite_tags: 'fox test_artist', email: 'secret@example.invalid', api_key: 'never-return-this', blacklisted_tags: 'private' }));
     const client = new ApiClient(fetcher, (site) => credentials.read(site));
     const openViewer = vi.fn().mockResolvedValue(undefined);
-    const handlers = actions({ adapters: { e621: adapter }, library, credentials, client, demo: false, preferences: new PreferenceStore(profile), openViewer, openExternal: async () => {}, selectDirectory: async () => null });
+    const setFullscreen = vi.fn(), windowAction = vi.fn();
+    const handlers = actions({ adapters: { e621: adapter }, library, credentials, client, preferences: new PreferenceStore(profile), openViewer, setFullscreen, windowAction, openExternal: async () => {}, selectDirectory: async () => null });
     try {
+      expect(handlers[CHANNELS.setFullscreen](true)).toBeNull(); expect(setFullscreen).toHaveBeenCalledWith(true);
+      expect(handlers[CHANNELS.windowAction]('maximize')).toBeNull(); expect(windowAction).toHaveBeenCalledWith('maximize');
+      for (const invalid of ['true', null, {}, 1]) expect(() => handlers[CHANNELS.setFullscreen](invalid)).toThrow();
+      for (const invalid of ['execute', 'file:///secret', null, { action: 'close' }]) expect(() => handlers[CHANNELS.windowAction](invalid)).toThrow();
       await expect(handlers[CHANNELS.getAccount]()).rejects.toMatchObject({ code: 'CREDENTIALS_REQUIRED' });
       for (const prefix of ['', 'a', '*fox', 'rating:s', 'x'.repeat(81), 'a b']) await expect(handlers[CHANNELS.suggestTags](prefix)).rejects.toMatchObject({ code: 'INVALID_INPUT' });
       expect(await handlers[CHANNELS.suggestTags]('fo')).toEqual([{ name: 'forest', category: 0, count: 42 }]);

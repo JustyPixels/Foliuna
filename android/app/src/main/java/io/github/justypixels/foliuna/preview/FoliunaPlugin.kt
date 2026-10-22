@@ -38,6 +38,13 @@ class FoliunaPlugin : Plugin() {
     }
     private fun input(call: PluginCall) = obj(call.data.opt("input"))
     private fun unsupported(): Nothing = fail("UNSUPPORTED", "This desktop operation is unavailable on Android.")
+    @PluginMethod fun windowAction(call: PluginCall) = run(call) { unsupported() }
+    @PluginMethod fun setFullscreen(call: PluginCall) {
+        if (!trusted()) { reject(call, Failure("FORBIDDEN", "Untrusted app frame.")); return }
+        val enabled = call.data.opt("input")
+        if (enabled !is Boolean) { reject(call, Failure("INVALID_INPUT", "Invalid fullscreen state.")); return }
+        activity.runOnUiThread { (activity as MainActivity).immersive(enabled); resolve(call, null) }
+    }
     @PluginMethod fun platform(call: PluginCall) = run(call) { j("name" to "android", "chooseLibrary" to false, "importSidecars" to false, "exportLibrary" to true, "floatingViewer" to false, "flash" to false) }
     @PluginMethod fun search(call: PluginCall) = run(call) { services.search(input(call)) }
     @PluginMethod fun getPost(call: PluginCall) = run(call) { services.post(input(call)) }

@@ -8,7 +8,6 @@ import { CompatibleAdapter } from './adapters/compatible';
 import type { BooruAdapter } from './adapters/types';
 import { publicFetch } from './public-fetch';
 import { E621Adapter } from './adapters/e621';
-import { DemoAdapter } from './adapters/demo';
 import { ArchiveLibrary } from './archive/library';
 import { CredentialStore } from './credentials';
 import { APP_URL, bundlePath, CSP, PLAYER_CSP } from './security';
@@ -18,11 +17,9 @@ import { PreferenceStore } from './preferences';
 import { Gallery, galleryRoute } from './archive/gallery';
 
 app.setName('Foliuna');
-const demo = app.commandLine.hasSwitch('demo') || (!app.isPackaged && process.env.FOLIUNA_DEMO === '1');
 const profile = app.commandLine.getSwitchValue('user-data-dir');
 if (profile) app.setPath('userData', resolve(profile));
 else if (!app.isPackaged && process.env.FOLIUNA_DATA_DIR) app.setPath('userData', resolve(process.env.FOLIUNA_DATA_DIR));
-else if (demo) app.setPath('userData', join(app.getPath('appData'), 'Foliuna Demo'));
 protocol.registerSchemesAsPrivileged([{ scheme: 'foliuna', privileges: { standard: true, secure: true, supportFetchAPI: true } }]);
 
 let window: BrowserWindow | null = null;
@@ -76,22 +73,30 @@ else {
     const adapters: Partial<Record<string, BooruAdapter>> = {};
     const refreshProviders = () => {
       for (const id of Object.keys(adapters)) delete adapters[id];
-      for (const source of providers.list()) adapters[source.id] = demo ? new DemoAdapter(source.id) : source.engine === 'e621' ? new E621Adapter(source.id, client) : new CompatibleAdapter(source, client);
+      for (const source of providers.list()) adapters[source.id] = source.engine === 'e621' ? new E621Adapter(source.id, client) : new CompatibleAdapter(source, client);
     };
     refreshProviders();
-    library = new ArchiveLibrary(app.getPath('userData'), adapters, demo, fetcher);
+    library = new ArchiveLibrary(app.getPath('userData'), adapters, fetcher);
     await library.initialize();
     gallery = new Gallery(library);
     let choosingDirectory = false;
-    const handlers = actions({ adapters, library, credentials, client, demo, media, preferences, providers, refreshProviders, openExternal: (url) => shell.openExternal(url),
+    const handlers = actions({ adapters, library, credentials, client, media, preferences, providers, refreshProviders, openExternal: (url) => shell.openExternal(url),
+      setFullscreen: (enabled) => window?.setFullScreen(enabled),
+      windowAction: (action) => {
+        if (!window) return;
+        if (action === 'minimize') window.minimize();
+        else if (action === 'maximize') { if (window.isMaximized()) window.unmaximize(); else window.maximize(); }
+        else window.close();
+      },
       openViewer: async (request) => {
         const post = 'archiveSha' in request ? await gallery.getPost(request.archiveSha, request.source) : media.register(await adapters[request.provider]!.getPost(request.id));
         if (post.unavailable) throw new Error('Unavailable post');
         viewer?.close();
         viewer = new BrowserWindow({ parent: window ?? undefined, title: `Foliuna · Post #${post.id}`, width: 1000, height: 800,
-          minWidth: 320, minHeight: 240, autoHideMenuBar: true, backgroundColor: '#101815',
+          minWidth: 320, minHeight: 240, frame: false, autoHideMenuBar: true, backgroundColor: '#101815',
           webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true, webSecurity: true, webviewTag: false } });
         const current = viewer;
+        current.setMenu(null);
         current.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
         current.webContents.on('will-navigate', (e) => e.preventDefault());
         current.webContents.on('will-frame-navigate', (e) => { if (e.isMainFrame || !/^foliuna:\/\/player\/swf\.html#(?:[a-z][a-z0-9-]{0,63}\/[1-9]\d*|gallery\/[0-9a-f]{64})$/.test(e.url)) e.preventDefault(); });
@@ -104,7 +109,7 @@ else {
         current.on('closed', () => { if (viewer === current) viewer = null; window?.focus(); });
         // This window has no preload or bridge; fragment values are derived from validated post metadata.
         const variant = ['webm', 'mp4', 'swf', 'gif'].includes(post.file.extension) ? 'original' : request.size;
-        const asset = post.archive ? `/gallery/${post.archive.sha256}/original` : demo ? `/demo/${post.tags.species[0]}.svg` : `/media/${post.provider}/${post.id}/${variant}`;
+        const asset = post.archive ? `/gallery/${post.archive.sha256}/original` : `/media/${post.provider}/${post.id}/${variant}`;
         await current.loadURL(`foliuna://app/viewer.html#${encodeURIComponent(JSON.stringify({ id: post.id, extension: post.file.extension, asset, archiveSha: post.archive?.sha256 }))}`);
       },
       selectDirectory: async () => {
@@ -126,10 +131,11 @@ else {
     const createWindow = async () => {
       window = new BrowserWindow({ icon: join(app.getAppPath(), app.isPackaged ? 'icon.png' : 'build/icon.png'),
         title: 'Foliuna', width: 1440, height: 960, minWidth: 900, minHeight: 650, backgroundColor: '#101815',
-        autoHideMenuBar: true,
+        frame: false, autoHideMenuBar: true,
         webPreferences: { preload: join(__dirname, 'preload.cjs'), contextIsolation: true, nodeIntegration: false,
           sandbox: true, webSecurity: true, webviewTag: false, allowRunningInsecureContent: false },
       });
+      window.setMenu(null);
       window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
       window.webContents.on('will-navigate', (event) => event.preventDefault());
       window.webContents.on('will-frame-navigate', (event) => { if (event.isMainFrame || !/^foliuna:\/\/player\/swf\.html#(?:[a-z][a-z0-9-]{0,63}\/[1-9]\d*|gallery\/[0-9a-f]{64})$/.test(event.url)) event.preventDefault(); });

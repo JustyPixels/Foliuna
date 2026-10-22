@@ -1,6 +1,6 @@
 import type { Post, Preferences } from '../shared/contracts';
 import { PostImage } from './PostImage';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState, type CSSProperties } from 'react';
 import { GalleryVideoPreview } from './GalleryVideoPreview';
 import { cacheThumbnail } from './thumbnail';
 import { isAndroid } from './platform';
@@ -25,7 +25,7 @@ export const PostGrid = memo(function PostGrid({ posts, mode, busy, onSelect }: 
 
 const PostCard = memo(function PostCard({ post, mode, busy, onSelect }: Omit<GridProps, 'posts'> & { post: Post }) {
   return <button className="post-card" disabled={busy} onClick={() => onSelect(post)} aria-label={`View post ${post.id}`}>
-      <div className="post-image" style={mode === 'natural' && post.file.width > 0 && post.file.height > 0 ? { aspectRatio: `${post.file.width}/${post.file.height}` } : undefined}>
+      <div className="post-image" style={mode === 'natural' && post.file.width > 0 && post.file.height > 0 ? { aspectRatio: `${post.file.width}/${post.file.height}`, '--image-padding': `${post.file.height / post.file.width * 100}%` } as CSSProperties : undefined}>
         {post.archive && ['webm', 'mp4'].includes(post.file.extension) ? <GalleryVideoPreview post={post} /> : <PostImage urls={post.file.extension === 'gif' ? [post.originalUrl, post.previewUrl] : [post.previewUrl, post.sampleUrl]}
           alt={`${post.tags.species.join(', ') || 'Artwork'} preview`} unavailable={post.unavailable} lazy onReady={(image) => { if (post.archive && image.src === post.originalUrl) void cacheThumbnail(post.archive.sha256, image); }} />}
         <span className={`rating-badge rating-${post.rating}`}>{ratingNames[post.rating]}</span>
