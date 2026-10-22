@@ -26,7 +26,7 @@ export function VideoPlayer({ src, poster, label, onFullscreen, playback }: { sr
   }
   function seek(value: number) { const video = ref.current!; if (Number.isFinite(video.duration)) { const target = Math.min(video.duration, Math.max(0, value)); video.currentTime = target; setTime(target); } }
   return <div className="video-player" data-media-controls onKeyDown={(event) => {
-    if ((event.target as HTMLElement).matches('input,button')) return;
+    if ((event.target as HTMLElement).matches('input,button,select')) return;
     if (event.key === ' ' || event.key.toLowerCase() === 'k') { event.preventDefault(); void toggle(); }
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); seek(ref.current!.currentTime + (event.key === 'ArrowRight' ? 5 : -5)); }
   }}>

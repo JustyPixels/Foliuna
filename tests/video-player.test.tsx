@@ -15,4 +15,8 @@ it('keeps the seek slider at the requested time before asynchronous media time u
   expect(video.currentTime).toBe(4.2); expect(position).toHaveValue('4.2');
   fireEvent.change(position, { target: { value: '0' } });
   expect(video.currentTime).toBe(0); expect(position).toHaveValue('0');
+  let playbackStarts = 0; video.play = async () => { playbackStarts++; };
+  fireEvent.keyDown(screen.getByLabelText('Playback speed'), { key: ' ' });
+  fireEvent.keyDown(screen.getByLabelText('Playback speed'), { key: 'ArrowRight' });
+  expect(playbackStarts).toBe(0); expect(video.currentTime).toBe(0);
 });
