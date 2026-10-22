@@ -297,3 +297,9 @@ The final npm run check passed 246 unit/component tests and all 8 Electron journ
 ## 2026-10-22 — Preserve native speed-selector keyboard behavior
 
 GitHub independently passed Windows (39719323261) and Android API 26/36 (39719323220) on 3340007 after the seek synchronization fix. A final control check found that the player's general keyboard shortcut handler also received Space/arrow keys intended for the playback-speed select. Excluded select elements alongside inputs/buttons and extended the focused regression to ensure these keys neither start playback nor seek. The focused test passed; this final small accessibility correction is being rechecked in the release builds. No archive, network, credential or bridge behavior changed.
+
+## 2026-10-22 — Stabilize hosted native gesture calibration
+
+Final application source 7bfc6d8 passed all 246 local unit/component tests, 8 Electron journeys, API 26 phone/API 36 tablet instrumentation (10 each), both export/import forms per API, Android lint, 28-file/seven-fuse Windows packaging, hardened packaged smoke, NSIS payload inspection and APK identity/certificate/artifact checks. GitHub Windows run 39720123907 also passed. Hosted Android run 39720123922 passed API 26 but its API 36 phone timed out at the first injected detail swipe; all other tests passed.
+
+Adjusted only native instrumentation/CI setup: wait for the decoded image and active WebView, wait for native UI idle after scrolling, measure gesture Y inside the visible viewport, and include active-package/focus diagnostics on timeout. Matched CI emulator RAM to the 3 GB local API 36 setup. The owned API 36 phone layout then passed all 10 tests (npm run android:test; work/android-api36-phone-tests.log). These changes do not modify application, archive, bridge or media/network code. Hosted checks are repeated for this calibration before release.

@@ -30,7 +30,7 @@ class WebViewTest {
     private fun waitFor(expression: String) {
         val until = System.currentTimeMillis() + 30000
         while (System.currentTimeMillis() < until) { if (js(expression) == "true") return; Thread.sleep(100) }
-        throw AssertionError("Timed out: $expression; diagnostic=" + js("JSON.stringify({back:window.__back,cancel:window.__cancel,focus:document.activeElement.tagName,open:!!document.querySelector('.media-viewer[open]')})") + "; page=" + js("document.body.innerText.slice(0,2000)"))
+        throw AssertionError("Timed out: $expression; package=" + UiDevice.getInstance(instrumentation).currentPackageName + "; diagnostic=" + js("JSON.stringify({back:window.__back,cancel:window.__cancel,focus:document.activeElement.tagName,active:document.hasFocus(),open:!!document.querySelector('.media-viewer[open]')})") + "; page=" + js("document.body.innerText.slice(0,2000)"))
     }
     private fun promise(expression: String): JSONObject {
         js("window.__answer=null;Promise.resolve($expression).then(v=>window.__answer=JSON.stringify(v)).catch(e=>window.__answer=JSON.stringify({failure:String(e)}))")
@@ -39,8 +39,11 @@ class WebViewTest {
     }
     private fun click(label: String) { assertEquals("true", js("(function(){var b=Array.from(document.querySelectorAll('button')).find(b=>b.textContent.trim()===$label||b.getAttribute('aria-label')===$label||(b.matches('.nav-item')&&b.textContent.trim().endsWith($label)));if(!b||b.disabled)return false;b.click();return true})()")) }
     private fun swipeMedia(selector: String, left: Boolean) {
+        waitFor("(function(){var image=document.querySelector('$selector img');return !!image&&image.complete&&image.naturalWidth>0&&image.getBoundingClientRect().height>0})()")
+        waitFor("document.hasFocus()")
         js("document.querySelector('$selector').scrollIntoView({block:'center'})")
-        val point = JSONObject(org.json.JSONTokener(js("JSON.stringify((function(){var r=document.querySelector('$selector').getBoundingClientRect();return {left:(r.left+r.width*.2)*devicePixelRatio,right:(r.left+r.width*.8)*devicePixelRatio,y:(r.top+r.height/2)*devicePixelRatio}})())")).nextValue().toString())
+        UiDevice.getInstance(instrumentation).waitForIdle()
+        val point = JSONObject(org.json.JSONTokener(js("JSON.stringify((function(){var r=document.querySelector('$selector').getBoundingClientRect();return {left:(r.left+r.width*.2)*devicePixelRatio,right:(r.left+r.width*.8)*devicePixelRatio,y:((Math.max(0,r.top)+Math.min(innerHeight,r.bottom))/2)*devicePixelRatio}})())")).nextValue().toString())
         val offset = IntArray(2); instrumentation.runOnMainSync { web.getLocationOnScreen(offset) }
         val from = point.getDouble(if (left) "right" else "left").toInt() + offset[0]
         val to = point.getDouble(if (left) "left" else "right").toInt() + offset[0]
