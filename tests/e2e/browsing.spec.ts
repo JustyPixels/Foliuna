@@ -75,6 +75,8 @@ test('media: actual video/GIF decoding, isolated Ruffle playback, resizable/full
     await page.getByRole('button', { name: 'Mute video', exact: true }).click();
     await page.getByLabel('Playback speed').selectOption('0.5');
     await page.getByLabel('Video position').focus();
+    await page.keyboard.press('End');
+    await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBeGreaterThan(0);
     await page.keyboard.press('Home');
     await expect.poll(() => video.evaluate((node) => (node as HTMLVideoElement).currentTime)).toBe(0);
     await expect(page.getByLabel('Video position')).toHaveValue('0');
