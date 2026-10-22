@@ -24,7 +24,7 @@ export function VideoPlayer({ src, poster, label, onFullscreen, playback }: { sr
     if (!video.paused) video.pause();
     else try { await video.play(); setError(''); } catch { setError('Playback could not start. Retry or choose another supported format.'); }
   }
-  function seek(value: number) { const video = ref.current!; if (Number.isFinite(video.duration)) video.currentTime = Math.min(video.duration, Math.max(0, value)); }
+  function seek(value: number) { const video = ref.current!; if (Number.isFinite(video.duration)) { const target = Math.min(video.duration, Math.max(0, value)); video.currentTime = target; setTime(target); } }
   return <div className="video-player" data-media-controls onKeyDown={(event) => {
     if ((event.target as HTMLElement).matches('input,button')) return;
     if (event.key === ' ' || event.key.toLowerCase() === 'k') { event.preventDefault(); void toggle(); }
