@@ -119,3 +119,5 @@ The preview uses io.github.justypixels.foliuna.preview and disposable debug sign
 
 - [x] Full-page details, true system fullscreen, keyboard/swipe navigation, custom video controls and a Windows title bar.
 - [x] Real safe e621 forest search screenshots, credited artwork rotation, scroll motion and reduced-motion/pause controls; user-facing demo removed.
+
+- [x] Publish Windows 0.5.0-rc.2 and Android 0.1.0-preview.2 with full-page/system-fullscreen viewing and the credited real-search website.

@@ -15,7 +15,7 @@ double-click `Foliuna.exe`. Keep its resources and other bundled files beside
 it. The ZIP is portable as an application folder; settings and encrypted keys
 still live in `%APPDATA%\Foliuna`, not beside the executable.
 
-Version 0.5.0-rc.1 is an **unsigned prerelease**. Windows may show an unknown
+Version 0.5.0-rc.2 is an **unsigned prerelease**. Windows may show an unknown
 publisher warning. A SHA-256 checksum detects differing bytes but does not
 replace a publisher signature. Certificate signing is still a stable-release
 requirement; no certificate, private signing key or signing service is supplied.
@@ -23,7 +23,7 @@ requirement; no certificate, private signing key or signing service is supplied.
 To compare a downloaded asset with `SHA256SUMS.txt`:
 
 ```powershell
-Get-FileHash .\Foliuna-0.5.0-rc.1-Windows-x64-Setup.exe -Algorithm SHA256
+Get-FileHash .\Foliuna-0.5.0-rc.2-Windows-x64-Setup.exe -Algorithm SHA256
 ```
 
 Target: Windows 10/11 x64. Local verification uses Windows 10 build 19045;
